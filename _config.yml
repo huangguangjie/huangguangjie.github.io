@@ -3,11 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: huanggj
-subtitle: info & blog
-description:
-author: Jie Huangguang
-language: Chinese
+title: 打不死的小强
+subtitle: 记录身边事
+description: 博客 文章 随笔
+author: 黄广杰
+language: zh-Hans
 timezone:
 
 # URL
@@ -34,7 +34,7 @@ titlecase: false # Transform title into titlecase
 external_link: true # Open external links in new tab
 filename_case: 0
 render_drafts: false
-post_asset_folder: false
+post_asset_folder: true
 relative_link: false
 future: true
 highlight:
@@ -63,7 +63,10 @@ pagination_dir: page
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+# theme: landscape
+theme: next
+# theme: yilia
+# theme: huno
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
