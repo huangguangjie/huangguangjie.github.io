@@ -29,7 +29,7 @@ copyright: true
 canonical: true
 
 # Change headers hierarchy on site-subtitle (will be main site description) and on all post/pages titles for better SEO-optimization.
-seo: false
+seo: true
 
 # ---------------------------------------------------------------
 # Menu Settings
@@ -289,7 +289,7 @@ mathjax:
 baidu_analytics: 3d7c461a1ca7575c79cbb0cae57f3d5c
 
 # Duoshuo ShortName
-#duoshuo_shortname:
+# duoshuo_shortname: huanggj
 
 # Disqus
 disqus:
@@ -529,7 +529,7 @@ vendors:
   # Internal version: 1.0.0
   # https://github.com/hustcc/canvas-nest.js
   canvas_nest:
-  
+
   #three
   three:
   three_waves:
