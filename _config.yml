@@ -39,7 +39,7 @@ post_asset_folder: true
 relative_link: false
 future: true
 highlight:
-  enable: true
+  enable: false
   line_number: true
   auto_detect: false
   tab_replace:
@@ -96,4 +96,7 @@ jsonContent:
       categories: false
       tags: true
 
-duoshuo_shortname: huanggj
+prism_plugin:
+  mode: 'preprocess'    # realtime/preprocess
+  theme: 'default'      # default/copy/dark/funky/okaidia/solarizedlight/tomorrow/twilight
+  line_number: false    # default false

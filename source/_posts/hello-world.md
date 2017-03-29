@@ -41,3 +41,30 @@ $ hexo deploy
 ```
 
 More info: [Deployment](https://hexo.io/docs/deployment.html)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>demo</title>
+</head>
+<body>
+    <button type="button" id="alertBtn">Alert</button>
+    <script type="text/javascript" src="alert.js"></script>
+    <script type="text/javascript">
+        document.getElementById('alertBtn').onclick = function(){
+            //调用 Chef.alert() 方法
+            Chef.alert({
+                'title':'标题',
+                'content':'内容',
+                'firm':'确定',
+                'width':'300px',
+                'shade':0.4
+            });
+        };
+    </script>
+</body>
+</html>
+
+```
