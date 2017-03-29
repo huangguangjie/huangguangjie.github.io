@@ -1,0 +1,208 @@
+# ---------------------------------------------------------------
+# Site Information Settings
+# ---------------------------------------------------------------
+
+# Head info
+head:
+    favicon: "/img/favicon.png"
+    high_res_favicon: "/img/favicon.png"
+    apple_touch_icon: "/img/favicon.png"
+    keywords: "博客 随笔 技术"
+
+# Jump Links Settings
+url:
+    rss:
+    daily_pic: "/"
+    logo: "/"
+
+
+# ---------------------------------------------------------------
+# Style Settings
+# ---------------------------------------------------------------
+
+# Schemes
+scheme: Paradox
+#scheme: Isolation
+
+# UI & UX: slogan, color, effect
+uiux:
+    slogan: "Hi, nice to meet you"
+    theme_color: "#0097A7"
+    theme_sub_color: "#00838F"
+    hyperlink_color: "#00838F"
+    button_color: "#757575"
+    android_chrome_color: "#0097A7"
+    nprogress_color: "#29d"
+    nprogress_buffer: "800"
+
+# JS Effect Switches
+js_effect:
+    fade: true
+    smoothscroll: false
+
+# Reading experience
+reading:
+    entry_excerpt: 80
+
+# Thumbnail Settings
+thumbnail:
+    purecolor:
+    random_amount: 19
+
+# Background Settings
+# bing available parameter:
+#     new | color= | type=
+#         color available value: black, blue, brown, green, multi, orange, pink, purple, red, white, yellow
+#         type available value: A (animal), C (culture), N (nature), S (space), T (travel)
+background:
+    purecolor: "#F5F5F5"
+    # bgimg: "/img/bg.png"
+    bing:
+        enable: false
+        parameter:
+            color: black
+            type: S
+
+# Images Settings
+img:
+    logo: "/img/logo.png"
+    avatar: "/img/avatar.png"
+    daily_pic: "/img/daily_pic.png"
+    sidebar_header: "/img/sidebar_header.png"
+    footerico: "/img/footer/footer_ico-"
+    random_thumbnail: "/img/random/material-"
+    footer_image:
+        #upyun_logo:
+            #link: "https://www.upyun.com/"
+            #src: "/img/upyun_logo.png"
+
+# Custom Fonts
+fonts: Roboto, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif
+
+# Card Elevation Level
+card_elevation: 2
+
+
+# ---------------------------------------------------------------
+# Menu Settings
+# ---------------------------------------------------------------
+
+# SNS Menu
+sns:
+    email: huangguangjie12@outlook.com
+    facebook: "https://www.facebook.com/facebook"
+    twitter: "https://twitter.com/twitter"
+    googleplus: "https://www.google.com/"
+    weibo:
+    instagram:
+    tumblr:
+    github:
+    linkedin:
+    zhihu:
+    bilibili:
+    telegram:
+
+# SNS Share Switch
+sns_share:
+    twitter: true
+    facebook: true
+    googleplus: true
+    weibo: true
+    linkedin: false
+    qq: false
+    telegram: false
+
+# Sidebar Customize
+sidebar:
+    dropdown:
+        Email Me:
+            link: "mailTo:huangguangjie12@outlook.com"
+            icon: email
+    homepage:
+        use: true
+        icon: home
+        divider: false
+    archives:
+        use: true
+        icon: move_to_inbox
+        divider: false
+    categories:
+        use: false
+        icon: chrome_reader_mode
+        divider: false
+    pages:
+        列表:
+            link: "/archives"
+            icon: view_headline
+            divider: false
+        关于:
+            link: "/about"
+            icon: person
+            divider: false
+        友链:
+            link: "/links"
+            icon: supervisor_account
+            divider: false
+        图片库:
+            link: "/gallery"
+            icon: picture_in_picture
+            divider: false
+        标签云:
+            link: "/tags"
+            icon: loyalty
+            divider: true
+    article_num:
+        use: true
+        divider: false
+    footer:
+        divider: true
+        theme: false
+        support: false
+        feedback: false
+        material: false
+
+# Qrcode for redirect at other device
+qrcode: true
+
+# Support Pin posts on the top of the list
+topPost: true
+
+# ---------------------------------------------------------------
+# Integrated Services
+# ---------------------------------------------------------------
+
+# Comment Systems
+# Available value of "use":
+#     duoshuo | disqus | disqus_click
+comment:
+    use:
+    shortname:
+    duoshuo_thread_key_type: path
+    duoshuo_embed_js_url: "https://static.duoshuo.com/embed.js"
+
+# Search Systems
+# Available value:
+#     swiftype | google | local
+search:
+    use: local
+    path: search.xml
+    swiftype_key:
+
+# Analytics Systems
+analytics:
+    baidu_id: 3d7c461a1ca7575c79cbb0cae57f3d5c
+    google_id:
+
+# Leancloud Views
+leancloud:
+    enable: false
+    app_id: #你的 app_id
+    app_key: #你的 app_key
+    av_core_mini: "https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"
+
+# Busuanzi 不蒜子 Views
+busuanzi:
+    enable: true
+    all_site_uv: true
+    post_pv: true
+    busuanzi_pure_mini_js: "https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"
