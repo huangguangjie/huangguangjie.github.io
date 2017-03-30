@@ -42,7 +42,8 @@ js_effect:
 
 # Reading experience
 reading:
-    entry_excerpt: 80
+    # entry_excerpt: 80
+    entry_excerpt: 150
 
 # Thumbnail Settings
 thumbnail:
@@ -66,7 +67,8 @@ background:
 # Images Settings
 img:
     logo: "/img/logo.png"
-    avatar: "/img/avatar.png"
+    # avatar: "/img/avatar.png"
+    avatar: "https://avatars3.githubusercontent.com/u/8894655?v=3&s=460"
     daily_pic: "/img/daily_pic.png"
     sidebar_header: "/img/sidebar_header.png"
     footerico: "/img/footer/footer_ico-"
