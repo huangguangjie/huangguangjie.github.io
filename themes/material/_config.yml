@@ -177,7 +177,7 @@ topPost: true
 # Available value of "use":
 #     duoshuo | disqus | disqus_click
 comment:
-    use:
+    use: UY
     shortname:
     duoshuo_thread_key_type: path
     duoshuo_embed_js_url: "https://static.duoshuo.com/embed.js"

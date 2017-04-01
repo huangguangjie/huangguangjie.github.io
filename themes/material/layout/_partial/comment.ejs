@@ -18,13 +18,25 @@
 
 <% if(theme.comment.use === 'disqus_click') { %>
     <!-- 使用 DISQUS_CLICK -->
-    <div id="disqus-comment">	
+    <div id="disqus-comment">   
         <%- partial('_widget/disqus_click') %>
     </div>
     <style>
         #disqus-comment{
             background-color: #eee;
             padding: 2pc;
+        }
+    </style>
+<% } %>
+
+<% if(theme.comment.use === 'UY') { %>
+    <!-- UY BEGIN -->
+    <div id="uyan_frame"></div>
+    <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2129588"></script>
+    <!-- UY END -->
+    <style>
+        #uyan_frame{
+            padding: 0 44px;
         }
     </style>
 <% } %>
