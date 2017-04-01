@@ -176,9 +176,10 @@ topPost: true
 # Comment Systems
 # Available value of "use":
 #     duoshuo | disqus | disqus_click
+#     UY - 友言  |  SOHUCS - 畅言
 comment:
-    use: UY
-    shortname:
+    use: SOHUCS
+    shortname: huangguangjie
     duoshuo_thread_key_type: path
     duoshuo_embed_js_url: "https://static.duoshuo.com/embed.js"
 

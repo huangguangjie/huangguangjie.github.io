@@ -40,3 +40,22 @@
         }
     </style>
 <% } %>
+
+<% if(theme.comment.use === 'SOHUCS') { %>
+    <!-- SOHUCS BEGIN -->
+    <!--PC版-->
+    <div id="SOHUCS" sid="<%- page.title %>"></div>
+    <script charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/changyan.js" ></script>
+    <script type="text/javascript">
+    window.changyan.api.config({
+        appid: 'cysVmJjJn',
+        conf: 'prod_fa7796e7b39f37b373367f8bbd755c39'
+    });
+    </script>
+    <!-- SOHUCS END -->
+    <style>
+        #SOHUCS{
+            padding: 0 44px 44px;
+        }
+    </style>
+<% } %>
