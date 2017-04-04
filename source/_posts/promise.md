@@ -2,8 +2,7 @@
 title: 从实际应用中去理解Promise
 categories:
 - 技术
-- 心得
-- javascript
+- 应用
 tags:
 - es6
 - promise

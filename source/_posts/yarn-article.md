@@ -2,10 +2,8 @@
 title: Yarn,或将取代npm客户端
 categories:
 - 技术
-- yarn
-- npm
-tags:
 - 工具
+tags:
 - yarn
 - npm
 - node
