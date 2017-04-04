@@ -4,73 +4,361 @@
   
     
     <entry>
-      <title><![CDATA[yarn]]></title>
-      <url>https://huangguangjie.github.io/2017/03/29/yarn-article/</url>
-      <content type="html"><![CDATA[<h2 id="Yarn将是NPM的终结者"><a href="#Yarn将是NPM的终结者" class="headerlink" title="Yarn将是NPM的终结者"></a>Yarn将是NPM的终结者</h2>]]></content>
-      
-        <categories>
-            
-            <category> 技术 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 工具 </tag>
-            
-            <tag> 示例 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Hello World]]></title>
-      <url>https://huangguangjie.github.io/2017/03/29/hello-world/</url>
-      <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><pre><code class="bash">$ hexo new &quot;My New Post&quot;
+      <title><![CDATA[从实际应用中去理解Promise]]></title>
+      <url>https://huangguangjie.github.io/2017/04/04/promise/</url>
+      <content type="html"><![CDATA[<p>在es6使用已经很普遍的今天，我再说Promise各种API及其原理的话也不过是锦上添花。Promise的重要性，我们不必多讲，相信大家都知道出现Promise的意义及其对js异步编程上的作用是多么巨大。不过，说真，要真正去理解使用这个对象，确实是有些困难，特别是对我这种理解新东西总是有困难症的人来说更甚。所以，我的办法就是重重复复地看相关的文章及api文档，以达到自己能使用及理解。在理解Promise之前，先来看一下异步的实现过程。</p>
+<h3 id="为什么要用Promise"><a href="#为什么要用Promise" class="headerlink" title="为什么要用Promise"></a>为什么要用Promise</h3><p>在说Promise之前，我们得先来确定一下为什么要有这个对象。</p>
+<h4 id="原生JS实现一个简单的ajax"><a href="#原生JS实现一个简单的ajax" class="headerlink" title="原生JS实现一个简单的ajax"></a>原生JS实现一个简单的ajax</h4><p>说到浏览器异步处理中，ajax可以说是最基本的异步编程方法了，可以简单实现为：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">//此实现，只是简单实现，未实现兼容处理</span>
+<span class="token keyword">var</span> url <span class="token operator">=</span> <span class="token string">'&lt;url>'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> result<span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> XHR <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">XMLHttpRequest</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+XHR<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> url<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+XHR<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+XHR<span class="token punctuation">.</span>onreadystatechange <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>readyState <span class="token operator">==</span> <span class="token number">4</span> <span class="token operator">&amp;&amp;</span> XHR<span class="token punctuation">.</span>status <span class="token operator">==</span> <span class="token number">200</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        result <span class="token operator">=</span> XHR<span class="token punctuation">.</span>response<span class="token punctuation">;</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
 </code></pre>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><pre><code class="bash">$ hexo server
+<p>在ajax的原生实现中，利用了<code>onreadystatechange</code>事件，当该事件触发且符合一定条件时，才能拿到我们想要的数据。之后我们才能开始执行回调里面的代码。这看上去并没有什么麻烦的，但是如果这时，我们想有两个ajax请求，并且还得有先后顺序进执行。我们这时会这样做。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">var</span> url <span class="token operator">=</span> <span class="token string">'&lt;url>'</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> result<span class="token punctuation">;</span>
+
+<span class="token keyword">var</span> XHR <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">XMLHttpRequest</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+XHR<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> url<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+XHR<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+XHR<span class="token punctuation">.</span>onreadystatechange <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>readyState <span class="token operator">==</span> <span class="token number">4</span> <span class="token operator">&amp;&amp;</span> XHR<span class="token punctuation">.</span>status <span class="token operator">==</span> <span class="token number">200</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        result <span class="token operator">=</span> XHR<span class="token punctuation">.</span>response<span class="token punctuation">;</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 在此重复上面的逻辑</span>
+        <span class="token keyword">var</span> url2 <span class="token operator">=</span> <span class="token string">'&lt;url>'</span><span class="token punctuation">;</span>
+        <span class="token keyword">var</span> result2<span class="token punctuation">;</span>
+        <span class="token keyword">var</span> XHR2 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">XMLHttpRequest</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        XHR2<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token string">'GET'</span><span class="token punctuation">,</span> url<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        XHR2<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        XHR2<span class="token punctuation">.</span>onreadystatechange <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>readyState <span class="token operator">==</span> <span class="token number">4</span> <span class="token operator">&amp;&amp;</span> XHR<span class="token punctuation">.</span>status <span class="token operator">==</span> <span class="token number">200</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                result <span class="token operator">=</span> XHR<span class="token punctuation">.</span>response<span class="token punctuation">;</span>
+                console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
 </code></pre>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><pre><code class="bash">$ hexo generate
+<p>当出现第三个ajax（甚至更多）仍然依赖上面的方法做，那将是一场灾难。这样的灾难，往往被称为<strong> 回调地狱 </strong><br>因此，我们需要消除掉回调地狱这个问题。<br>当然，除了消除回调地狱之外，还一个非常重要的需求：<strong> 为了我们的代码更加具有可读性与可维护性，我们需要将数据请求与数据处理逻辑区分开来 </strong>。上面的写法，是完全没有区分开的，当数据变得复杂，处理逻辑就更加复杂，到时我们就没法维护我们写的代码了。<br>（为了代码简洁性，部分代码使用es6的写法）</p>
+<h4 id="函数调用栈"><a href="#函数调用栈" class="headerlink" title="函数调用栈"></a>函数调用栈</h4><p>我们可以通过利用函数调用栈，将我们想要代码放到回调函数中，来解决<strong>回调地狱</strong>问题。函数调用栈这是一种什么概念呢？我们知道，js内置了一些公共的方法，如setTimeout与setInterval这两个函数，他们有一个特性，就是异步执行。当js执行到此类函数的时候，直接放到栈中（具体如何实现不做详解），当整个同步的js代码执行完成之后，再调用栈中的异步函数，当然这个调用栈也是按放入的顺序去一个一个执行。这样子我们就实现了异步处理按我们想要队列办法来实现。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">fn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'fn do!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">function</span> <span class="token function">fn1</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'do 1!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    fn <span class="token operator">&amp;&amp;</span> <span class="token function">setTimeout</span><span class="token punctuation">(</span>fn<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">function</span> <span class="token function">fn2</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'do 2!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    fn <span class="token operator">&amp;&amp;</span> <span class="token function">setTimeout</span><span class="token punctuation">(</span>fn<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">function</span> <span class="token function">fn3</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'do 3!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    fn <span class="token operator">&amp;&amp;</span> <span class="token function">setTimeout</span><span class="token punctuation">(</span>fn<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token function">fn1</span><span class="token punctuation">(</span><span class="token function">fn2</span><span class="token punctuation">(</span><span class="token function">fn3</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 输出结果为：</span>
+<span class="token comment" spellcheck="true">// do 3!</span>
+<span class="token comment" spellcheck="true">// do 2!</span>
+<span class="token comment" spellcheck="true">// do 1!</span>
+<span class="token comment" spellcheck="true">// fn do!</span>
 </code></pre>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><pre><code class="bash">$ hexo deploy
+<p>这种实现办法，虽然在一定程序上可以解决掉代码维护上的困难度，不过却影响到可读性。我们从调用的层叠性上看，令人搞不清顺序，从fn1到fn3的层层调用中，我们发现输出结果是先3然后再到1，最后才执行want函数，感觉虽然解决了代码回调地狱，却把顺序弄得不伦不类的。如果这队列上的回调更多，则会更加难以理解。</p>
+<h3 id="Promise的基础与使用"><a href="#Promise的基础与使用" class="headerlink" title="Promise的基础与使用"></a>Promise的基础与使用</h3><h4 id="Promise的引入"><a href="#Promise的引入" class="headerlink" title="Promise的引入"></a>Promise的引入</h4><p>如果浏览器已经支持了原生的Promise对象，那我们可以将上面的函数都改写为Promse对象的方法。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">fn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'fn do!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">function</span> <span class="token function">fn1</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'do 1!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token keyword">typeof</span> fn <span class="token operator">==</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token function">resolve</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token function">reject</span><span class="token punctuation">(</span><span class="token string">"TypeError:"</span> <span class="token operator">+</span> fn <span class="token operator">+</span> <span class="token string">"no a function."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">function</span> <span class="token function">fn2</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'do 2!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token keyword">typeof</span> fn <span class="token operator">==</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token function">resolve</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token function">reject</span><span class="token punctuation">(</span><span class="token string">"TypeError:"</span> <span class="token operator">+</span> fn <span class="token operator">+</span> <span class="token string">"no a function."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">function</span> <span class="token function">fn3</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'do 3!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token keyword">typeof</span> fn <span class="token operator">==</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token function">resolve</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">else</span> <span class="token function">reject</span><span class="token punctuation">(</span><span class="token string">"TypeError:"</span> <span class="token operator">+</span> fn <span class="token operator">+</span> <span class="token string">"no a function."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token function">fn1</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span>
+<span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">fn2</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">fn3</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token function">fn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 执行结果为：</span>
+<span class="token comment" spellcheck="true">// do 1!</span>
+<span class="token comment" spellcheck="true">// do 2!</span>
+<span class="token comment" spellcheck="true">// do 3!</span>
+<span class="token comment" spellcheck="true">// fn do!</span>
 </code></pre>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
-<pre><code class="html">&lt;!DOCTYPE html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-&lt;head&gt;
-    &lt;meta charset=&quot;UTF-8&quot;&gt;
-    &lt;title&gt;demo&lt;/title&gt;
-&lt;/head&gt;
-&lt;body&gt;
-    &lt;button type=&quot;button&quot; id=&quot;alertBtn&quot;&gt;Alert&lt;/button&gt;
-    &lt;script type=&quot;text/javascript&quot; src=&quot;alert.js&quot;&gt;&lt;/script&gt;
-    &lt;script type=&quot;text/javascript&quot;&gt;
-        document.getElementById(&#39;alertBtn&#39;).onclick = function(){
-            //调用 Chef.alert() 方法
-            Chef.alert({
-                &#39;title&#39;:&#39;标题&#39;,
-                &#39;content&#39;:&#39;内容&#39;,
-                &#39;firm&#39;:&#39;确定&#39;,
-                &#39;width&#39;:&#39;300px&#39;,
-                &#39;shade&#39;:0.4
-            });
-        };
-    &lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+<p>从上面的代码中，我们很清楚地看到，fn1是从1-3的顺序去执行，并且代码层次也可以分得非常清晰。这就是Promise的在实际中最基本的实现。</p>
+<h4 id="Promise对象"><a href="#Promise对象" class="headerlink" title="Promise对象"></a>Promise对象</h4><p>为了更好理解Promise，我们把其基础的概念进行解释一下：<br>一、Promise对象有三种状态，分别是：</p>
+<ul>
+<li>padding:等待中，或进行中，表示还没有得到结果</li>
+<li>resolved(Fulfilled): 已经完成，表示得到了我们想要的结果，可以继续往下执行</li>
+<li>rejected: 也表示得到结果，但是由于结果并非我们所愿，因此拒绝执行</li>
+</ul>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span> reject<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token function">reject</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
+<p>二、Promise对象中的then方法，可以接收构造函数中处可以接收构造函数中处理的状态变化，并分别对应执行。then方法有2个参数，第一个函数接收resolved状态的执行，第二个参数接收reject状态的执行。</p>
+<blockquote>
+<p>假设：var p = new Promise(resolve,reject)中有两参数，则p.then((data1) =&gt; {},(data2) =&gt; {})，此中data1是resolve执行处理的结果，而data2是reject执行处理的结果。</p>
+</blockquote>
+<p>then方法也会返回一个Promise对象。因此我们就可以进行then的链式调用了。这也是解决回调的主要方式。比如可以这样写：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'resolve'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token keyword">else</span><span class="token punctuation">{</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'reject'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">reject</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'then 1'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'then 2'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>我们在浏览器控制台上打印<code>new Promise((resolve,reject) =&gt; {})</code>，从原型中可以看到除了then还有一个catch。<br>而<code>then(null,() =&gt; {})</code>就等同于<code>catch(() =&gt; {})</code>。从这个结构上来看，then函数其实也是接受两个参数的。我们可以猜想，在执行异步的队列过程中，每一步都是有返回成功与失败的情况，那么则在每一种情况下都可以执行相应的逻辑代码。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// 伪代码</span>
+<span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//第一个回调是成功的，第二个是失败的</span>
+    <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token operator">...</span>
+</code></pre>
+<p>或者根据Promise的对象实例接口可以分开来写：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// 伪代码</span>
+<span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//成功的</span>
+    <span class="token punctuation">.</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//失败的</span>
+    <span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token operator">...</span>
+</code></pre>
+<p>三、Promise.all方法是等待所有Promise都执行完之后才执行的回调函数。比如，很多ajax在被按顺序地执行，当所有ajax都返回值了，这时才去执行all。<br>Promise.all接收一个Promise对象组成的数组作为参数，当这个数组所有的Promise对象状态都变成resolved或者rejected的时候，它才会去调用then方法。并且返回一个Promise对象。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">const</span> p1 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> p2 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> p3 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Promise<span class="token punctuation">.</span><span class="token function">all</span><span class="token punctuation">(</span><span class="token punctuation">[</span>p1<span class="token punctuation">,</span>p2<span class="token punctuation">,</span>p3<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'run Promise all callback!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>四、Promise.race方法则是在一个Promise对象数组中，只要有一个Promise的状态变成resolved或者rejected，也就是说只要有一个执行完成，就可以调用其then方法了。<br>同样Promise.race与是接收一个Promise数组作为参数，并返回一个Promise对象。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">const</span> p1 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> p2 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> p3 <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+Promise<span class="token punctuation">.</span><span class="token function">race</span><span class="token punctuation">(</span><span class="token punctuation">[</span>p1<span class="token punctuation">,</span>p2<span class="token punctuation">,</span>p3<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'run Promise all callback!'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<h4 id="Promise中的数据传递"><a href="#Promise中的数据传递" class="headerlink" title="Promise中的数据传递"></a>Promise中的数据传递</h4><p>Promise的then会执行之后会返回一个Promise对象，而then方法的两个可选参数是两个回调函数，这两个回调函数都有一个可选参数，实际上，这个参数就是从上一个Promise处理后resolved或者rejected的结果值。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token function">resolve</span><span class="token punctuation">(</span><span class="token string">'resolve 0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span> <span class="token function">reject</span><span class="token punctuation">(</span><span class="token string">'reject 0'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token string">"resolve 1"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token string">"reject 1"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token string">"resolve 2"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token string">"reject 2"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token string">"resolve 3"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token string">"reject 3"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 打印的结果为：</span>
+<span class="token comment" spellcheck="true">// resolve 0</span>
+<span class="token comment" spellcheck="true">// resolve 1</span>
+<span class="token comment" spellcheck="true">// resolve 2</span>
+<span class="token comment" spellcheck="true">// resolve 3</span>
+</code></pre>
+<p>从上面的结果来看，可以知道，每一个then方法的返回值，都是下一then方法中的回调函数中的参数值。这样内中的值就可以按着我们想要的顺序一步一步地向下传。</p>
+<h3 id="Promise在实际中的应用"><a href="#Promise在实际中的应用" class="headerlink" title="Promise在实际中的应用"></a>Promise在实际中的应用</h3><p>Promise的实际应用是非常广泛的，常见的异步编程中，基本上都可以使用Promise来实现。</p>
+<h4 id="应用Promise封装ajax"><a href="#应用Promise封装ajax" class="headerlink" title="应用Promise封装ajax"></a>应用Promise封装ajax</h4><p>在文章开始的时候，我们做过一个简便的ajax实际，现在我们再利用Promise来实现其过程。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// 简略实现ajax</span>
+<span class="token keyword">function</span> <span class="token function">ajax</span><span class="token punctuation">(</span>url<span class="token punctuation">,</span>type<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token punctuation">(</span>resolve<span class="token punctuation">,</span>reject<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> XHR <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">XHRHttpRequest</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        XHR<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span>type<span class="token punctuation">,</span>url<span class="token punctuation">,</span><span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        XHR<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        XHR<span class="token punctuation">.</span>onreadystatechange <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span><span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>readyState <span class="token operator">==</span> <span class="token number">4</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">if</span><span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>status <span class="token operator">==</span> <span class="token number">200</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+                        <span class="token keyword">let</span> response <span class="token operator">=</span> JSON<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>responseText<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token function">resolve</span><span class="token punctuation">(</span>response<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">catch</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token function">reject</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                    <span class="token function">reject</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span>XHR<span class="token punctuation">.</span>statusText<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>为了健壮性，处理了很多可能出现的异常，总之，就是正确的返回结果，就resolve一下，错误的返回结果，就reject一下。并且利用上面的参数传递的方式，将正确结果或者错误信息通过他们的参数传递出来。<br>然后在调用的时候，可以这样使用：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// 伪代码</span>
+<span class="token function">ajax</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>url<span class="token operator">></span><span class="token punctuation">,</span><span class="token operator">&lt;</span>type<span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span>response <span class="token operator">=</span><span class="token operator">></span> console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>response<span class="token punctuation">)</span><span class="token punctuation">,</span> error <span class="token operator">=</span><span class="token operator">></span> console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>现在所有的库几乎都将ajax请求利用Promise进行了封装，因此我们在使用jQuery等库中的ajax请求时，都可以利用Promise来让我们的代码更加优雅和简单。这也是Promise最常用的一个场景，因此我们一定要非常非常熟悉它，这样才能在应用的时候更加灵活。</p>
+</blockquote>
+<p>所以现在的jquery中的$.ajax实际上是可以这样子调用的：</p>
+<pre class=" language-javascript"><code class="language-javascript">$<span class="token punctuation">.</span><span class="token function">ajax</span><span class="token punctuation">(</span><span class="token operator">&lt;</span>url<span class="token operator">></span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">done</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span>callback<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Promise在实际应用中是非常广泛的，常见的ajax封装，图片异步加载，一些js插件的封装也可以通过异步的实现办法。真正去理解它，还需要不段地练习以相多多查看api文档。这样才能更好利用Promise为你做更多的事。<br>写此文我参考了一些别人的资料，并添加了一些自己的见解，七凑八凑而成。由于我的知识积累有限，有很多地方可能解释得也是不太清楚。在此给一下参考作者的文章：<a href="https://juejin.im/entry/58e1d720ac502e006c0e0196?from=singlemessage&amp;isappinstalled=1" target="_blank" rel="external">前端进阶：透彻掌握 Promise 的使用，读这篇就够了</a></p>
 ]]></content>
       
         <categories>
             
             <category> 技术 </category>
             
+            <category> 心得 </category>
+            
+            <category> javascript </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> es6 </tag>
+            
+            <tag> promise </tag>
+            
+            <tag> 原生对象 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Yarn,或将取代npm客户端]]></title>
+      <url>https://huangguangjie.github.io/2017/04/04/yarn-article/</url>
+      <content type="html"><![CDATA[<p>Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。</p>
+<h3 id="为什么用yarn"><a href="#为什么用yarn" class="headerlink" title="为什么用yarn"></a>为什么用yarn</h3><h4 id="非常快，非常非常快"><a href="#非常快，非常非常快" class="headerlink" title="非常快，非常非常快"></a>非常快，非常非常快</h4><p>yarn 缓存了每次你下载的模块，所以同样模块同样的版本不会发送第二次下载请求，对于没有缓存的模块， yarn 也可以通过并行的网络请求最大限度利用网络资源。现在真的是没有什么几十秒安装不完的依赖的。一个 50 个依赖的 webpack + babel 项目可以在 20 秒左右安装完成。</p>
+<h4 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h4><p>yarn在开始安装一个包之前会先用 checksums 来验证，你不用担心本地的缓存的包被破坏了导致安装失败。</p>
+<h4 id="可靠"><a href="#可靠" class="headerlink" title="可靠"></a>可靠</h4><p>被一群喜欢喵星人的开发者维护，以及有 FaceBook 在 production 环境中使用。完善的测试和基于 flow type 的 code base。保证各平台依赖的一致性。</p>
+<h4 id="网络优化"><a href="#网络优化" class="headerlink" title="网络优化"></a>网络优化</h4><p>力求网络资源最大利用化，让资源下载完美队列执行，避免大量的无用请求，下载失败会自动重新请求，避免整个安装过程失败</p>
+<h4 id="扁平化模式"><a href="#扁平化模式" class="headerlink" title="扁平化模式"></a>扁平化模式</h4><p>对于不匹配的依赖版本的包创立一个独立的包，避免创建重复的。</p>
+<h4 id="以及很多令人感动的小改进"><a href="#以及很多令人感动的小改进" class="headerlink" title="以及很多令人感动的小改进"></a>以及很多令人感动的小改进</h4><ol>
+<li>有些 npm 包会抛出 warning 提示信息，在一起 npm install 的时候只有一个名字你完全不知道是哪个包的哪个包的哪个包抛出的这个信息，而 yarn 改善了这一点。</li>
+<li><code>yarn ls</code> 会高亮出所有在 package.json 的 dependencies 里的依赖，增强可读性。</li>
+<li>每一条命令都会显示执行的时间。</li>
+<li>默认生成 lockfile . 保证 yarn 每次安装相同版本的依赖，npm shrinkwrap 会丧失掉同步性如果你忘了生成它。</li>
+<li><code>yarn why &lt;name&gt;</code> 这条命令可以告诉你为什么一个依赖会被安装到你的项目中。</li>
+</ol>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>安装yarn其实非常简单，可以使用npm进行安装yarn包。其<a href="https://yarnpkg.com/zh-Hans/" target="_blank" rel="external">官网</a>也有相应的安装文档:<a href="https://yarnpkg.com/zh-Hans/docs" target="_blank" rel="external">yarn docs</a></p>
+<pre class=" language-bash"><code class="language-bash">$ <span class="token function">npm</span> <span class="token function">install</span> -g yarn
+</code></pre>
+<p>安装完成之后可以查看版本号</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn --version
+</code></pre>
+<p>或者</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn -v
+</code></pre>
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>切换到自己的项目目录，执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn init
+</code></pre>
+<p>然后照着提示依次输入参数就OK了。<br>如果觉得麻烦，可以直接执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn init -y
+</code></pre>
+<p>这样可以直接创建最简的一个项目。其中包含了package.json文件。</p>
+<h4 id="添加包依赖"><a href="#添加包依赖" class="headerlink" title="添加包依赖"></a>添加包依赖</h4><p>接下来可以直接在此添加包依赖了,会自动安装最新版本，注意会覆盖指定版本号</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
+</code></pre>
+<p>或者</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
+</code></pre>
+<p>你会发现，在客户端会打印一出一堆信息如下，添加jquery依赖：</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add jquery
+yarn add v0.21.3
+info No lockfile found.
+<span class="token punctuation">[</span>1/4<span class="token punctuation">]</span> Resolving packages<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>2/4<span class="token punctuation">]</span> Fetching packages<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>3/4<span class="token punctuation">]</span> Linking dependencies<span class="token punctuation">..</span>.
+█████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+█████████████████████████████████░░░░░░░░░░░░░
+████████████████████████████████████████
+████████████████████████████████████████
+<span class="token punctuation">[</span>4/4<span class="token punctuation">]</span> Building fresh packages<span class="token punctuation">..</span>.
+success Saved lockfile.
+success Saved 1 new dependency.
+└─ jquery@3.2.1
+Done <span class="token keyword">in</span> 4.28s.
+</code></pre>
+<p>这时在当前目录中自动添加了一个yarn.lock文件，用于记录所有的包依赖信息。</p>
+<h4 id="更新包依赖"><a href="#更新包依赖" class="headerlink" title="更新包依赖"></a>更新包依赖</h4><p>更新某包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+</code></pre>
+<p>更新指定版本的包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
+</code></pre>
+<p>更新到指定某个标签上的包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
+</code></pre>
+<h4 id="移除依赖"><a href="#移除依赖" class="headerlink" title="移除依赖"></a>移除依赖</h4><pre class=" language-bash"><code class="language-bash">$ yarn remove <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+</code></pre>
+<p>后面的参数可以与更新包的类似。</p>
+<h4 id="开工"><a href="#开工" class="headerlink" title="开工"></a>开工</h4><p>在多人团队协作的时候，拉到代码之后，可以类似于npm一样，执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn <span class="token function">install</span>
+</code></pre>
+<p>即可以开工啦！</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>yarn管理器有一个很重要的文件需要注意，就是yarn.lock，这个是用来依赖的正确性，快速可靠安装的；是执行cli的时候自动生成的，在项目的根目录下，需要保留！！！！不要编辑它，这是自动生成的</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 技术 </category>
+            
+            <category> yarn </category>
+            
+            <category> npm </category>
+            
         </categories>
         
         
@@ -78,7 +366,230 @@
             
             <tag> 工具 </tag>
             
-            <tag> 示例 </tag>
+            <tag> yarn </tag>
+            
+            <tag> npm </tag>
+            
+            <tag> node </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[Redux之中间件applyMiddleware源码解读]]></title>
+      <url>https://huangguangjie.github.io/2017/04/04/redux-applyMiddleware/</url>
+      <content type="html"><![CDATA[<p>在学习了redux过程中，了解到中间件这个名词，但是我看了十遍，也完全就是懵逼的状态。于是又重复敲了几次代码也不能掌握这个东西到底是什么？看官网文档，那么些专业名词，让人半天摸不着头脑。我们从流程图中知道，react组件在执行过程中，特别是在中间插入各种奇怪的需求的时候，不可能每每都是改动一下代码逻辑，而是用一种方便插拔的方式添加进去。但是这个过程说得简单，理解也容易，问题到底是怎么实现的呢？本人这样的半吊子水平，要理解这么高深的东西，真是太困难了。反复地摸索过程中，感觉摸到一些门径，于是斗胆做一下我的解读，如有不对，欢迎斧正！</p>
+<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在学习appleyMiddleware中间件之前，必须要有一些知识储备。列出一下：</p>
+<ol>
+<li><a href="http://reactjs.cn/" target="_blank" rel="external">react</a></li>
+<li><a href="http://cn.redux.js.org/index.html" target="_blank" rel="external">redux</a>或者看github上的教程<a href="https://github.com/react-guide/redux-tutorial-cn#redux-tutorial" target="_blank" rel="external">redux-tutorial-cn</a></li>
+</ol>
+<h3 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h3><h4 id="applyMiddleware源码"><a href="#applyMiddleware源码" class="headerlink" title="applyMiddleware源码"></a>applyMiddleware源码</h4><pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">import</span> compose <span class="token keyword">from</span> <span class="token string">'./compose'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">function</span> <span class="token function">applyMiddleware</span><span class="token punctuation">(</span><span class="token operator">...</span>middlewares<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>createStore<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> store <span class="token operator">=</span> <span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span>
+        <span class="token keyword">var</span> dispatch <span class="token operator">=</span> store<span class="token punctuation">.</span>dispatch
+        <span class="token keyword">var</span> chain <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+        <span class="token keyword">var</span> middlewareAPI <span class="token operator">=</span> <span class="token punctuation">{</span>
+            getState<span class="token punctuation">:</span> store<span class="token punctuation">.</span>getState<span class="token punctuation">,</span>
+            dispatch<span class="token punctuation">:</span> <span class="token punctuation">(</span>action<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">dispatch</span><span class="token punctuation">(</span>action<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        chain <span class="token operator">=</span> middlewares<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>middleware <span class="token operator">=</span><span class="token operator">></span> <span class="token function">middleware</span><span class="token punctuation">(</span>middlewareAPI<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        dispatch <span class="token operator">=</span> <span class="token function">compose</span><span class="token punctuation">(</span><span class="token operator">...</span>chain<span class="token punctuation">)</span><span class="token punctuation">(</span>store<span class="token punctuation">.</span>dispatch<span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            <span class="token operator">...</span>store<span class="token punctuation">,</span>
+            dispatch
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="createStore"><a href="#createStore" class="headerlink" title="createStore"></a>createStore</h4><p>第一次执行applyMiddleware增加中间件，使用闭包保存中间件，然后返回一个函数（一开始我很奇怪为什么参数是createStore？？)，在弄明白applyMiddleware之前，得先来看他是如何被调用的，那就得先从createStore开始看。<br>摘了核心的<code>createStore</code>的源码如下：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">function</span> <span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> preloadedState <span class="token operator">===</span> <span class="token string">'function'</span> <span class="token operator">&amp;&amp;</span> <span class="token keyword">typeof</span> enhancer <span class="token operator">===</span> <span class="token string">'undefined'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        enhancer <span class="token operator">=</span> preloadedState
+        preloadedState <span class="token operator">=</span> undefined
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> enhancer <span class="token operator">!==</span> <span class="token string">'undefined'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> enhancer <span class="token operator">!==</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Expected the enhancer to be a function.'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token function">enhancer</span><span class="token punctuation">(</span>createStore<span class="token punctuation">)</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> reducer <span class="token operator">!==</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Expected the reducer to be a function.'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>分析源码可以发现其中有一段这样的代码：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> enhancer <span class="token operator">!==</span> <span class="token string">'undefined'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> enhancer <span class="token operator">!==</span> <span class="token string">'function'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'Expected the enhancer to be a function.'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token function">enhancer</span><span class="token punctuation">(</span>createStore<span class="token punctuation">)</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>翻译一下这个参数<code>enhancer</code>英文意思为：“增强器”。<br>我反复看这代码，越看越吃惊，天啊！作者写的这段代码太让人惊叹了！我从未见过如此风骚的代码！</p>
+<h4 id="enhancer"><a href="#enhancer" class="headerlink" title="enhancer"></a>enhancer</h4><p>我们不妨再简化一下这个<code>createStore</code>源码：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">,</span>enhancer<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token operator">...</span>
+    <span class="token keyword">return</span> <span class="token function">enhancer</span><span class="token punctuation">(</span>createStore<span class="token punctuation">)</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">)</span>
+    <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>我们知道，其实<code>enhancer === applyMiddleware</code>，这样子，我们再将<code>enhancer</code>换为<code>applyMiddleware</code><br>这时变成这样子：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">,</span>enhancer<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token operator">...</span>
+    <span class="token keyword">return</span> <span class="token function">applyMiddleware</span><span class="token punctuation">(</span>createStore<span class="token punctuation">)</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">)</span>
+    <span class="token operator">...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>这时，我们可以将里面的返回代码拿出来，得出这样的：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token function">applyMiddleware</span><span class="token punctuation">(</span>createStore<span class="token punctuation">)</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> <span class="token operator">&lt;</span>enhancer<span class="token operator">></span>
+</code></pre>
+<p>我们可以想一下，执行这段代码会返回什么呢？暂时先不用管，我们假设返回结果为<enhancer>。<br>从函数定义上，执行到此地，就被返回了，也就是到函数到此结束，下面的所有代码都不会执行了。那createStore函数，到这里，就交给了applyMiddleware去处理了。</enhancer></p>
+<h4 id="applyMiddleware"><a href="#applyMiddleware" class="headerlink" title="applyMiddleware"></a>applyMiddleware</h4><p>我们再回到applyMiddleware的源码上来。看到，定义的applayMiddlware为（简化之后）：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">applyMiddleware</span><span class="token punctuation">(</span><span class="token operator">...</span>middlewares<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>createStore<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>然后我们不妨一步一步调用此函数：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// step1</span>
+<span class="token keyword">const</span> step1 <span class="token operator">=</span> <span class="token function">applyMiddleware</span><span class="token punctuation">(</span><span class="token operator">...</span>middlewares<span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//返回 function(createStore){}</span>
+
+<span class="token comment" spellcheck="true">// step2</span>
+<span class="token keyword">const</span> step2 <span class="token operator">=</span> <span class="token function">step1</span><span class="token punctuation">(</span>createStore<span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//返回 function(reducer,preloadedState,enhancer){}</span>
+
+<span class="token comment" spellcheck="true">// step2的返回值即为</span>
+<span class="token keyword">const</span> step3 <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">,</span>enhancer<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 对比createStore的定义</span>
+<span class="token keyword">function</span> <span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">,</span>enhancer<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+</code></pre>
+<p>我们在此可以惊奇地发现，原来，createStore函数居然可以通过applyMiddleware返回的！！！那在此，可以得出，createStore(reducer,preloadedState,enhancer)执行之后，如果enhancer未传，那么就是普通的createStore了，如果传了，那实际上，createStore已经被enhancer接管了，然后相当于再返回一个普通的createStore而已。这才是其中的精妙之处！</p>
+<p>我们再来看一下我们平时调用createStore时的方式是这样的：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token function">createStore</span><span class="token punctuation">(</span>
+    rootReducers<span class="token punctuation">,</span>    <span class="token comment" spellcheck="true">//reducer</span>
+    preloadedState<span class="token punctuation">,</span>
+    <span class="token function">applyMiddleware</span><span class="token punctuation">(</span> <span class="token comment" spellcheck="true">//enhancer</span>
+        thunkMiddleware<span class="token punctuation">,</span>
+        createLogger
+    <span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+</code></pre>
+<p>可以将里面的<code>applyMiddleware</code>替换为<code>&lt;enhancer&gt;</code>，然后与上面的对比：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span>preloadedState<span class="token punctuation">,</span><span class="token operator">&lt;</span>enhancer<span class="token operator">></span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// 实际上，enhancer传了参，那么返回的结果实际上也是一个普通的 createStore</span>
+</code></pre>
+<p>在第一次调用createStore的时候，createStore先判断是否有middlewares(enhancer)的加入，如果有，就不执行createStore后面的操作，return出去执行enhancer()。这里换一种说法：</p>
+<blockquote>
+<p>执行createStore的时候，只要传了中间件applyMiddleware这样的合法参数，那么，就相当于createStore被改写了，实际返回时，也是一个createStore方法，然后执行之后，与普通的是一样的，而且中间可以随意添加移除各种需求的逻辑组件。此种实现方法被冠以一个名词：<a href="https://en.wikipedia.org/wiki/Currying" target="_blank" rel="external">柯里化(Currying)</a>，就是将多参变成单参的函数，也就是通过函数链的方式进行返回以达到单参函数。这就是applyMiddleware中间件的核心价值！</p>
+</blockquote>
+<p><strong> 注意：执行了enhancer(createStore)后，只传入两个参数(reducer,preloadedState)，第三个参数 enhancer为undefined </strong></p>
+<h4 id="store"><a href="#store" class="headerlink" title="store"></a>store</h4><p>执行enhancer就要回过头看applyMiddleware源码。<br>实际上执行enhancer，返回就是我们要的createStore函数！</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">applyMiddleware</span><span class="token punctuation">(</span><span class="token operator">...</span>middlewares<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>createStore<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+          <span class="token operator">...</span>store<span class="token punctuation">,</span>
+          dispatch
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">//执行之后，返回值为createStore函数：</span>
+<span class="token keyword">function</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+</code></pre>
+<p>由于没有第三个参数enhancer，所以这才是真正执行createStore()，返回一个没有 middleware的store。<br>我们可以看一下applyMiddleware里面有一个语句：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token operator">...</span>
+<span class="token keyword">var</span> store <span class="token operator">=</span> <span class="token function">createStore</span><span class="token punctuation">(</span>reducer<span class="token punctuation">,</span> preloadedState<span class="token punctuation">,</span> enhancer<span class="token punctuation">)</span>
+<span class="token operator">...</span>
+</code></pre>
+<p>在这里，可以看出，在内部，也执行了createStore函数的调用，也就是说，createStore将实现移交给了applyMiddleware之后，在applyMiddleware内部同样会生成普通的store对象的。同样，如果这里的enhancer如果存在，继续循环原先的步骤。</p>
+<h4 id="middleware"><a href="#middleware" class="headerlink" title="middleware"></a>middleware</h4><p>我们继续看内部的源码为：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token operator">...</span>
+<span class="token keyword">var</span> dispatch <span class="token operator">=</span> store<span class="token punctuation">.</span>dispatch
+<span class="token keyword">var</span> chain <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token keyword">var</span> middlewareAPI <span class="token operator">=</span> <span class="token punctuation">{</span>
+  getState<span class="token punctuation">:</span> store<span class="token punctuation">.</span>getState<span class="token punctuation">,</span>
+  dispatch<span class="token punctuation">:</span> <span class="token punctuation">(</span>action<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">dispatch</span><span class="token punctuation">(</span>action<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+chain <span class="token operator">=</span> middlewares<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>middleware <span class="token operator">=</span><span class="token operator">></span> <span class="token function">middleware</span><span class="token punctuation">(</span>middlewareAPI<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token operator">...</span>
+</code></pre>
+<p>定义了一个chain数组，存放每一个被处理过的middleware。<br>代码可以这样解释：首先为每一个middleware以<code>{getState，dispatch}</code>为参数执行一遍，其实是为了给middleware一个原生的<code>{getState，dispatch}</code>两个方法的指针，以便在middleware中调用。<br>而上面的applyMiddleware的参数中就有两个参数：<strong>thunkMiddleware</strong>,<strong>createLogger</strong>，他们都是middleware。他们在传入applyMiddleware的过程中，都被包装过一次，并且存放在chain数组中。<br>请看一个简单的middleware：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">const</span> logger <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">{</span>getState<span class="token punctuation">,</span>dispatch<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> next <span class="token operator">=</span><span class="token operator">></span> action <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'dispatching'</span><span class="token punctuation">,</span>action<span class="token punctuation">)</span>
+    <span class="token keyword">let</span> result <span class="token operator">=</span> <span class="token function">next</span><span class="token punctuation">(</span>action<span class="token punctuation">)</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'next state'</span><span class="token punctuation">,</span><span class="token function">getState</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> result
+<span class="token punctuation">}</span>
+</code></pre>
+<p>调用后返回的chain是一个以next为参数的函数数组:</p>
+<pre class=" language-javascript"><code class="language-javascript">chain <span class="token operator">=</span> <span class="token punctuation">[</span>logger<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>middleware <span class="token operator">=</span><span class="token operator">></span> <span class="token function">middleware</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    getState<span class="token punctuation">:</span>store<span class="token punctuation">.</span>getState<span class="token punctuation">,</span>
+    dispatch<span class="token punctuation">:</span><span class="token punctuation">(</span>action<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">dispatch</span><span class="token punctuation">(</span>action<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h4 id="compose"><a href="#compose" class="headerlink" title="compose"></a>compose</h4><p>继续看代码，有一个这样的语句：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token operator">...</span>
+dispatch <span class="token operator">=</span> <span class="token function">compose</span><span class="token punctuation">(</span><span class="token operator">...</span>chain<span class="token punctuation">)</span><span class="token punctuation">(</span>store<span class="token punctuation">.</span>dispatch<span class="token punctuation">)</span>
+<span class="token operator">...</span>
+</code></pre>
+<p>dispatch被compose包装之后，重新赋值给自身。但这段语句看得莫名莫妙。这是什么鬼意思？干嘛用的？</p>
+<p>这里，不妨来看一下compose源码</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">function</span> <span class="token function">compose</span><span class="token punctuation">(</span><span class="token operator">...</span>funcs<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>funcs<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> arg <span class="token operator">=</span><span class="token operator">></span> arg
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>funcs<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> funcs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">const</span> last <span class="token operator">=</span> funcs<span class="token punctuation">[</span>funcs<span class="token punctuation">.</span>length <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span>
+    <span class="token keyword">const</span> rest <span class="token operator">=</span> funcs<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> rest<span class="token punctuation">.</span><span class="token function">reduceRight</span><span class="token punctuation">(</span><span class="token punctuation">(</span>composed<span class="token punctuation">,</span> f<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">f</span><span class="token punctuation">(</span>composed<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">last</span><span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>其中一段为：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> rest<span class="token punctuation">.</span><span class="token function">reduceRight</span><span class="token punctuation">(</span><span class="token punctuation">(</span>composed<span class="token punctuation">,</span> f<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">f</span><span class="token punctuation">(</span>composed<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">last</span><span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>看到这段，更加头疼。。。反正看来看去。大体意思是这样：<code>compose</code> 可以接受一组函数参数，从右到左来组合多个函数，然后返回一个组合函数。<br>也就是说，compose接收chain这个数组，然后用reduceRight函数进行组合，最终合成了一个新的函数，只能这么理解了。</p>
+<h4 id="dispatch"><a href="#dispatch" class="headerlink" title="dispatch"></a>dispatch</h4><p>到这里，也就是说，dispatch已经被compose重新组装过一次，在最后，再被组装成一个新的store返回。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token operator">...</span>
+<span class="token keyword">return</span> <span class="token punctuation">{</span>
+  <span class="token operator">...</span>store<span class="token punctuation">,</span>
+  dispatch
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h3><p>middleware内部的dispatch是原生的没有middleware时的dispatch，<br>每一个middleware都带有原生的getState，dispatch和next（下一个middleware），所以我可以在middleware中不调用next，而直接调用dispatch，就跳过了后面的middleware了。<br>applyMiddleware中间件，其实就是将createStore接管了，然后在最终返回一个store对象。每一个中间件都是做这样的一件事情，这样，就可以源源不断地往里面添加需求或者移出需求，而不必修改流程代码上的任何逻辑。仅此而已！</p>
+]]></content>
+      
+        <categories>
+            
+            <category> 技术 </category>
+            
+            <category> 源码 </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> react </tag>
+            
+            <tag> redux </tag>
             
         </tags>
         

@@ -10,7 +10,7 @@
     
     <title>
         
-            yarn | 
+            Yarn,或将取代npm客户端 | 
         
         打不死的小强
     </title>
@@ -27,7 +27,7 @@
     <meta name="theme-color" content="#0097A7">
     <meta name="author" content="黄广杰">
     <meta name="description" content="博客 文章 随笔">
-    <meta name="keywords" content="博客 随笔 技术,工具,示例">
+    <meta name="keywords" content="博客 随笔 技术,工具,yarn,npm,node">
 
     <!--iOS -->
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -48,9 +48,9 @@
     <!-- The Open Graph protocol -->
     <meta property="og:url" content="https://huangguangjie.github.io">
     <meta property="og:type" content="blog">
-    <meta property="og:title" content="yarn | 打不死的小强">
+    <meta property="og:title" content="Yarn,或将取代npm客户端 | 打不死的小强">
     <meta property="og:description" content="博客 文章 随笔">
-    <meta property="og:article:tag" content="工具"> <meta property="og:article:tag" content="示例"> 
+    <meta property="og:article:tag" content="工具"> <meta property="og:article:tag" content="yarn"> <meta property="og:article:tag" content="npm"> <meta property="og:article:tag" content="node"> 
 
     <!--[if lte IE 9]>
         <link rel="stylesheet" href="/css/ie-blocker.css">
@@ -197,7 +197,7 @@
 
     <!-- Custom Head -->
     
-</head>
+<link rel="stylesheet" href="/css/prism.css" type="text/css"></head>
 
 
     
@@ -244,7 +244,7 @@
     </button>
 
     <ul class="post-toc-wrap mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="post-toc-trigger-btn">
-        <ol class="post-toc"><li class="post-toc-item post-toc-level-2"><a class="post-toc-link" href="#Yarn将是NPM的终结者"><span class="post-toc-number">1.</span> <span class="post-toc-text">Yarn将是NPM的终结者</span></a></li></ol>
+        <ol class="post-toc"><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#为什么用yarn"><span class="post-toc-number">1.</span> <span class="post-toc-text">为什么用yarn</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#非常快，非常非常快"><span class="post-toc-number">1.1.</span> <span class="post-toc-text">非常快，非常非常快</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#安全"><span class="post-toc-number">1.2.</span> <span class="post-toc-text">安全</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#可靠"><span class="post-toc-number">1.3.</span> <span class="post-toc-text">可靠</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#网络优化"><span class="post-toc-number">1.4.</span> <span class="post-toc-text">网络优化</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#扁平化模式"><span class="post-toc-number">1.5.</span> <span class="post-toc-text">扁平化模式</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#以及很多令人感动的小改进"><span class="post-toc-number">1.6.</span> <span class="post-toc-text">以及很多令人感动的小改进</span></a></li></ol></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#安装"><span class="post-toc-number">2.</span> <span class="post-toc-text">安装</span></a></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#使用"><span class="post-toc-number">3.</span> <span class="post-toc-text">使用</span></a><ol class="post-toc-child"><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#初始化"><span class="post-toc-number">3.1.</span> <span class="post-toc-text">初始化</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#添加包依赖"><span class="post-toc-number">3.2.</span> <span class="post-toc-text">添加包依赖</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#更新包依赖"><span class="post-toc-number">3.3.</span> <span class="post-toc-text">更新包依赖</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#移除依赖"><span class="post-toc-number">3.4.</span> <span class="post-toc-text">移除依赖</span></a></li><li class="post-toc-item post-toc-level-4"><a class="post-toc-link" href="#开工"><span class="post-toc-number">3.5.</span> <span class="post-toc-text">开工</span></a></li></ol></li><li class="post-toc-item post-toc-level-3"><a class="post-toc-link" href="#总结"><span class="post-toc-number">4.</span> <span class="post-toc-text">总结</span></a></li></ol>
 
         <!--
         <li class="mdl-menu__item">
@@ -280,7 +280,7 @@
         
     
             <p class="article-headline-p">
-                yarn
+                Yarn,或将取代npm客户端
             </p>
         </div>
 
@@ -294,12 +294,12 @@
 
     <!-- Author Avatar -->
     <div id="author-avatar">
-        <img src="/img/avatar.png" width="44px" height="44px" alt="Author Avatar"/>
+        <img src="https://avatars3.githubusercontent.com/u/8894655?v=3&s=460" width="44px" height="44px" alt="Author Avatar"/>
     </div>
     <!-- Author Name & Date -->
     <div>
         <strong>黄广杰</strong>
-        <span>3月 29, 2017</span>
+        <span>4月 04, 2017</span>
     </div>
 
     <div class="section-spacer"></div>
@@ -320,7 +320,7 @@
         </button>
         <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="article-functions-qrcode-button">
             <li class="mdl-menu__item">在其它设备中阅读本文章</li>
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPYAAAD2CAAAAADAeSUUAAACzklEQVR42u3aQXLCMAwFUO5/6fYANJkvyXSC/bxihoD1zEJI8uvnyPXCxsbGxsbGxsbGfiT7Fa/3T/3x1RfPX4bSerIZMzY2NvbW7F5w76GsCv1+917M2NjY2Cewr7a/eiZJYPdH03u3GjM2NjY2dnX7+1In+WxyuNjY2NjYc3a15MgPMS97sLGxsbF7jKT8uG8V5dSE9PFeGjY2Nvbj2fnQ9Dmv/3W+jY2Njf1gdnVVx7HJIVYTZDNybGxs7E3Zk2s0vebO2t2TggcbGxv7ZHbSAJpf0MkHxr19sbGxsfdm90YC+UB3UnjkySkqlrCxsbE3ZecJbN546u3SazNhY2Njn8POW0VrxwPVdlI+eC7nbWxsbOwvZ89hSfJYlZCqVzCxsbGxT2D3wkqOZkFDvzjuHfXSsLGxsTdiVxnlqzODUW7vOhE2Njb23uxJeihvPGgw5e82KzBsbGzsL2dP/vqvGsd+vLDBxsbG3pSdp5xJs753iKuGxNjY2Nh7s6t/6/OrM/lxJAPjvGl1edDY2NjYW7MnDaZJopq3/gtjCWxsbOxN2asaQEk6maS9eWzY2NjYu7LvE1i1ibPgYk0raUVpGBsbG3tTdq/d3zu46tHk+CTVYWNjY+/KrhYGn7uIk5cr1dSFjY2NfQI7TyfVJyflRHmUW52KYGNjY2/E7vGqsN4lnkmrCxsbG/tMdpKQqkVC9RLP5AdoJjBsbGzsLdhrC4YkmeXI6oBh2XwbGxsb+/Hs6pqMWpNPlZv+eSLExsbG3pQ9v0yTlw3J6/tU2nuNjY2NfQK7mrTycFetPIGNpiLY2NjYX87uXX/MA80T5KpGEjY2Njb2pGzolTHVEfKCUgQbGxv7YHa1/dQLNy+ZPl6KYGNjYz+eXS0q8kFs8j29Yy1cFcXGxsbeml1t3Eyez8fD+VFGB4SNjY29KfuchY2NjY2NjY2Njf2Y9Qs/0bnMncqW4QAAAABJRU5ErkJggg==">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPYAAAD2CAAAAADAeSUUAAAC40lEQVR42u3aS3LbMBAFQN//0snWi5h6b8ZOyUBzpSpRIBpcjObz8efK6wMbGxsbGxsbGxv7Ldkf8fWPhR7vfP7t53uiTX+xcr5nbGxs7LPZ+SNz8GbrydPrPWNjY2NfwE4Yz0eQr5OvnHyOnoWNjY2NPQpmz0eTHFwbCLGxsbGxc/YsdOUHmgczbGxsbOxNab4t7udPb4tWP1hLw8bGxn57dt40fZ/P/7W/jY2Njf3G7PZKUpHNWE9SkBruHBsbG/tQ9myMph3rmSU5SbMh3yc2Njb2qex8oc2o5SzN2K+GjY2NfQN7lgxsxnRmqUvbiihqadjY2Ni/nL3fYh6EZq3ifZKDjY2NfQ97FkJmpZ/2iXnjuQ5g2NjY2BewnwND247dBKSkeFS3B7CxsbGPY88K/fvUpU1a8jEgbGxs7HvY+0GZFrM53LwtgY2NjX02u20M/FyZKXkB+aEPR3awsbGxfzl7ljy0gSRZf/Ptly8DGxsb+1B2VFjP/+4/hrRNwWjTJMbGxsY+m138lY/TlbbxkPw2SYFeHDQ2Njb20ew2DZiFuryhm6c3+XFgY2Njn8pOSjYtNYG1haFNcQobGxv7bPasTNM2gzdlqU0zGBsbG/s2dl7iaVsL+ZWXn+oWBTY2NvYF7CQNqMNGOWqzCY0vXhs2Njb20ey8QPNdh5IAZq2IoiuCjY2NfRw7H51pQ1E7GJQfWVHGwsbGxr6M3Q5EJqX/dsimbTa8WAcbGxv7Gnbbat0UjPbthDxMYmNjY5/KnjVuNw3g5HCLon8eCLGxsbEPZW+GafJxzDbtSdq99ZrY2NjYR7PzoJUHkjy0zAJnnhRhY2Nj38POxx/zFCIPlpvSUlK6wsbGxsZOAlWexuRhMm8DfENXBBsbG/sa9j6d2IwKDdsP2NjY2Bew24JO+21U+olDV3tM2NjY2GezN4WbdpgyuWfWYK6LStjY2NhHsO+5sLGxsbGxsbGxsd/m+gtiKwGTjOMNtQAAAABJRU5ErkJggg==">
         </ul>
     
 
@@ -332,7 +332,7 @@
     </button>
     <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="article-functions-viewtags-button">
         <li class="mdl-menu__item">
-        <a class="post_tag-link" href="/tags/工具/">工具</a></li><li class="mdl-menu__item"><a class="post_tag-link" href="/tags/示例/">示例</a>
+        <a class="post_tag-link" href="/tags/node/">node</a></li><li class="mdl-menu__item"><a class="post_tag-link" href="/tags/npm/">npm</a></li><li class="mdl-menu__item"><a class="post_tag-link" href="/tags/yarn/">yarn</a></li><li class="mdl-menu__item"><a class="post_tag-link" href="/tags/工具/">工具</a>
     </ul>
     
 
@@ -359,7 +359,7 @@
 
     <!-- Share Weibo -->
     
-        <a class="post_share-link" href="http://service.weibo.com/share/share.php?appkey=&title=yarn&url=https://huangguangjie.github.io//2017/03/29/yarn-article/index.html&pic=&searchPic=false&style=simple" target="_blank">
+        <a class="post_share-link" href="http://service.weibo.com/share/share.php?appkey=&title=Yarn,或将取代npm客户端&url=https://huangguangjie.github.io//2017/04/04/yarn-article/index.html&pic=&searchPic=false&style=simple" target="_blank">
             <li class="mdl-menu__item">
                 分享到微博
             </li>
@@ -368,7 +368,7 @@
 
     <!-- Share Twitter -->
     
-        <a class="post_share-link" href="https://twitter.com/intent/tweet?text=yarn&url=https://huangguangjie.github.io//2017/03/29/yarn-article/index.html&via=黄广杰" target="_blank">
+        <a class="post_share-link" href="https://twitter.com/intent/tweet?text=Yarn,或将取代npm客户端&url=https://huangguangjie.github.io//2017/04/04/yarn-article/index.html&via=黄广杰" target="_blank">
             <li class="mdl-menu__item">
                 分享到 Twitter
             </li>
@@ -377,7 +377,7 @@
 
     <!-- Share Facebook -->
     
-        <a class="post_share-link" href="https://www.facebook.com/sharer/sharer.php?u=https://huangguangjie.github.io//2017/03/29/yarn-article/index.html" target="_blank">
+        <a class="post_share-link" href="https://www.facebook.com/sharer/sharer.php?u=https://huangguangjie.github.io//2017/04/04/yarn-article/index.html" target="_blank">
             <li class="mdl-menu__item">
                 分享到 Facebook
             </li>
@@ -386,7 +386,7 @@
 
     <!-- Share Google+ -->
     
-        <a class="post_share-link" href="https://plus.google.com/share?url=https://huangguangjie.github.io//2017/03/29/yarn-article/index.html" target="_blank">
+        <a class="post_share-link" href="https://plus.google.com/share?url=https://huangguangjie.github.io//2017/04/04/yarn-article/index.html" target="_blank">
             <li class="mdl-menu__item">
                 分享到 Google+
             </li>
@@ -410,7 +410,77 @@
                 <!-- Post Content -->
                 <div id="post-content" class="mdl-color-text--grey-700 mdl-card__supporting-text fade out">
     
-        <h2 id="Yarn将是NPM的终结者"><a href="#Yarn将是NPM的终结者" class="headerlink" title="Yarn将是NPM的终结者"></a>Yarn将是NPM的终结者</h2>
+        <p>Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。</p>
+<h3 id="为什么用yarn"><a href="#为什么用yarn" class="headerlink" title="为什么用yarn"></a>为什么用yarn</h3><h4 id="非常快，非常非常快"><a href="#非常快，非常非常快" class="headerlink" title="非常快，非常非常快"></a>非常快，非常非常快</h4><p>yarn 缓存了每次你下载的模块，所以同样模块同样的版本不会发送第二次下载请求，对于没有缓存的模块， yarn 也可以通过并行的网络请求最大限度利用网络资源。现在真的是没有什么几十秒安装不完的依赖的。一个 50 个依赖的 webpack + babel 项目可以在 20 秒左右安装完成。</p>
+<h4 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h4><p>yarn在开始安装一个包之前会先用 checksums 来验证，你不用担心本地的缓存的包被破坏了导致安装失败。</p>
+<h4 id="可靠"><a href="#可靠" class="headerlink" title="可靠"></a>可靠</h4><p>被一群喜欢喵星人的开发者维护，以及有 FaceBook 在 production 环境中使用。完善的测试和基于 flow type 的 code base。保证各平台依赖的一致性。</p>
+<h4 id="网络优化"><a href="#网络优化" class="headerlink" title="网络优化"></a>网络优化</h4><p>力求网络资源最大利用化，让资源下载完美队列执行，避免大量的无用请求，下载失败会自动重新请求，避免整个安装过程失败</p>
+<h4 id="扁平化模式"><a href="#扁平化模式" class="headerlink" title="扁平化模式"></a>扁平化模式</h4><p>对于不匹配的依赖版本的包创立一个独立的包，避免创建重复的。</p>
+<h4 id="以及很多令人感动的小改进"><a href="#以及很多令人感动的小改进" class="headerlink" title="以及很多令人感动的小改进"></a>以及很多令人感动的小改进</h4><ol>
+<li>有些 npm 包会抛出 warning 提示信息，在一起 npm install 的时候只有一个名字你完全不知道是哪个包的哪个包的哪个包抛出的这个信息，而 yarn 改善了这一点。</li>
+<li><code>yarn ls</code> 会高亮出所有在 package.json 的 dependencies 里的依赖，增强可读性。</li>
+<li>每一条命令都会显示执行的时间。</li>
+<li>默认生成 lockfile . 保证 yarn 每次安装相同版本的依赖，npm shrinkwrap 会丧失掉同步性如果你忘了生成它。</li>
+<li><code>yarn why &lt;name&gt;</code> 这条命令可以告诉你为什么一个依赖会被安装到你的项目中。</li>
+</ol>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>安装yarn其实非常简单，可以使用npm进行安装yarn包。其<a href="https://yarnpkg.com/zh-Hans/" target="_blank" rel="external">官网</a>也有相应的安装文档:<a href="https://yarnpkg.com/zh-Hans/docs" target="_blank" rel="external">yarn docs</a></p>
+<pre class=" language-bash"><code class="language-bash">$ <span class="token function">npm</span> <span class="token function">install</span> -g yarn
+</code></pre>
+<p>安装完成之后可以查看版本号</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn --version
+</code></pre>
+<p>或者</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn -v
+</code></pre>
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>切换到自己的项目目录，执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn init
+</code></pre>
+<p>然后照着提示依次输入参数就OK了。<br>如果觉得麻烦，可以直接执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn init -y
+</code></pre>
+<p>这样可以直接创建最简的一个项目。其中包含了package.json文件。</p>
+<h4 id="添加包依赖"><a href="#添加包依赖" class="headerlink" title="添加包依赖"></a>添加包依赖</h4><p>接下来可以直接在此添加包依赖了,会自动安装最新版本，注意会覆盖指定版本号</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
+</code></pre>
+<p>或者</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
+</code></pre>
+<p>你会发现，在客户端会打印一出一堆信息如下，添加jquery依赖：</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add jquery
+yarn add v0.21.3
+info No lockfile found.
+<span class="token punctuation">[</span>1/4<span class="token punctuation">]</span> Resolving packages<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>2/4<span class="token punctuation">]</span> Fetching packages<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>3/4<span class="token punctuation">]</span> Linking dependencies<span class="token punctuation">..</span>.
+█████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+█████████████████████████████████░░░░░░░░░░░░░
+████████████████████████████████████████
+████████████████████████████████████████
+<span class="token punctuation">[</span>4/4<span class="token punctuation">]</span> Building fresh packages<span class="token punctuation">..</span>.
+success Saved lockfile.
+success Saved 1 new dependency.
+└─ jquery@3.2.1
+Done <span class="token keyword">in</span> 4.28s.
+</code></pre>
+<p>这时在当前目录中自动添加了一个yarn.lock文件，用于记录所有的包依赖信息。</p>
+<h4 id="更新包依赖"><a href="#更新包依赖" class="headerlink" title="更新包依赖"></a>更新包依赖</h4><p>更新某包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+</code></pre>
+<p>更新指定版本的包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
+</code></pre>
+<p>更新到指定某个标签上的包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
+</code></pre>
+<h4 id="移除依赖"><a href="#移除依赖" class="headerlink" title="移除依赖"></a>移除依赖</h4><pre class=" language-bash"><code class="language-bash">$ yarn remove <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+</code></pre>
+<p>后面的参数可以与更新包的类似。</p>
+<h4 id="开工"><a href="#开工" class="headerlink" title="开工"></a>开工</h4><p>在多人团队协作的时候，拉到代码之后，可以类似于npm一样，执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn <span class="token function">install</span>
+</code></pre>
+<p>即可以开工啦！</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>yarn管理器有一个很重要的文件需要注意，就是yarn.lock，这个是用来依赖的正确性，快速可靠安装的；是执行cli的时候自动生成的，在项目的根目录下，需要保留！！！！不要编辑它，这是自动生成的</p>
+
     
 
     
@@ -426,6 +496,27 @@
 
 
 
+
+
+
+
+    <!-- SOHUCS BEGIN -->
+    <!--PC版-->
+    <div id="SOHUCS" sid="Yarn,或将取代npm客户端"></div>
+    <script charset="utf-8" type="text/javascript" src="https://changyan.sohu.com/upload/changyan.js" ></script>
+    <script type="text/javascript">
+    window.changyan.api.config({
+        appid: 'cysVmJjJn',
+        conf: 'prod_fa7796e7b39f37b373367f8bbd755c39'
+    });
+    </script>
+    <!-- SOHUCS END -->
+    <style>
+        #SOHUCS{
+            padding: 0 44px 44px;
+        }
+    </style>
+
                 
             </div>
 
@@ -433,13 +524,21 @@
             <nav class="material-nav mdl-color-text--grey-50 mdl-cell mdl-cell--12-col">
     <!-- Prev Nav -->
     
+        <a href="/2017/04/04/promise/" id="post_nav-newer" class="prev-content">
+            <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
+                <i class="material-icons">arrow_back</i>
+            </button>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            新篇
+        </a>
+    
 
     <!-- Section Spacer -->
     <div class="section-spacer"></div>
 
     <!-- Next Nav -->
     
-        <a href="/2017/03/29/hello-world/" id="post_nav-older" class="next-content">
+        <a href="/2017/04/04/redux-applyMiddleware/" id="post_nav-older" class="next-content">
             旧篇
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
@@ -477,7 +576,7 @@
 
     <!-- Sidebar Avatar -->
     <div class="sidebar-image">
-        <img src="/img/avatar.png" alt="黄广杰's avatar">
+        <img src="https://avatars3.githubusercontent.com/u/8894655?v=3&amp;s=460" alt="黄广杰's avatar">
     </div>
 
     <!-- Sidebar Email -->
@@ -531,7 +630,7 @@
             </a>
             <ul class="dropdown-menu">
             <li>
-                <a class="sidebar_archives-link" href="/archives/2017/03/">三月 2017<span class="sidebar_archives-count">2</span></a>
+                <a class="sidebar_archives-link" href="/archives/2017/04/">四月 2017<span class="sidebar_archives-count">3</span></a>
             </ul>
         </li>
         
@@ -600,7 +699,7 @@
         <li>
             <a href="/archives">
                 文章总数
-                <span class="sidebar-badge">2</span>
+                <span class="sidebar-badge">3</span>
             </a>
         </li>
         
