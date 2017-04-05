@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://huangguangjie.github.io/"/>
-  <updated>2017-04-04T09:10:05.427Z</updated>
+  <updated>2017-04-05T16:46:28.104Z</updated>
   <id>https://huangguangjie.github.io/</id>
   
   <author>
@@ -16,11 +16,297 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>如何定义一个高逼格的原生JS插件</title>
+    <link href="https://huangguangjie.github.io/2017/04/05/JS-Plugins/"/>
+    <id>https://huangguangjie.github.io/2017/04/05/JS-Plugins/</id>
+    <published>2017-04-04T16:00:00.000Z</published>
+    <updated>2017-04-05T16:46:28.104Z</updated>
+    
+    <content type="html"><![CDATA[<p>作为一个前端er，如果不会写一个小插件，都不好意思说自己是混前端界的。写还不能依赖jquery之类的工具库，否则装得不够高端。那么，如何才能装起来让自己看起来逼格更高呢？当然是利用js纯原生的写法啦。以前一直说，掌握了js原生，就基本上可以解决前端的所有脚本交互工作了，这话大体上是有些浮夸了。不过，也从侧面说明了原生js在前端中占着多么重要的一面。好了。废话不多说。咱们就来看一下怎么去做一个自己的js插件吧。</p>
+<h3 id="插件的需求"><a href="#插件的需求" class="headerlink" title="插件的需求"></a>插件的需求</h3><p>我们写代码，并不是所有的业务或者逻辑代码都要抽出来复用。首先，我们得看一下是否需要将一部分经常重复的代码抽象出来，写到一个单独的文件中为以后再次使用。再看一下我们的业务逻辑是否可以为团队服务。<br>插件不是随手就写成的，而是根据自己业务逻辑进行抽象。没有放之四海而皆准的插件，只有对插件，之所以叫做插件，那么就是开箱即用，或者我们只要添加一些配置参数就可以达到我们需要的结果。如果都符合了这些情况，我们才去考虑做一个插件。</p>
+<h3 id="插件封装的条件"><a href="#插件封装的条件" class="headerlink" title="插件封装的条件"></a>插件封装的条件</h3><p>一个可复用的插件需要满足以下条件：</p>
+<ol>
+<li>插件自身的作用域与用户当前的作用域相互独立，也就是插件内部的私有变量不能影响使用者的环境变量；</li>
+<li>插件需具备默认设置参数；</li>
+<li>插件除了具备已实现的基本功能外，需提供部分API，使用者可以通过该API修改插件功能的默认参数，从而实现用户自定义插件效果；</li>
+<li>插件需提供监听入口，及针对指定元素进行监听，使得该元素与插件响应达到插件效果；</li>
+<li>插件支持链式调用。</li>
+</ol>
+<p>关于插件封装的条件，可以查看一篇文章：<a href="http://geocld.github.io/2016/03/10/javascript_plugin/" target="_blank" rel="external">原生JavaScript插件编写指南</a><br>而我想要说明的是，如何一步一步地实现我的插件封装。所以，我会先从简单的方法函数来做起。</p>
+<h3 id="插件的外包装"><a href="#插件的外包装" class="headerlink" title="插件的外包装"></a>插件的外包装</h3><h4 id="用函数包装"><a href="#用函数包装" class="headerlink" title="用函数包装"></a>用函数包装</h4><p>所谓插件，其实就是封装在一个闭包中的一种函数集。我记得刚开始写js的时候，我是这样干的，将我想要的逻辑，写成一个函数，然后再根据不同需要传入不同的参数就可以了。<br>比如，我想实现两个数字相加的方法：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">add</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> n1 <span class="token operator">+</span> n2<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">// 调用</span>
+<span class="token function">add</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// 输出：3</span>
+</code></pre>
+<p>这就是我们要的功能的简单实现。如果仅仅只不过实现这么简单的逻辑，那已经可以了，没必要弄一些花里胡哨的东西。js函数本身就可以解决绝大多数的问题。不过我们在实际工作与应用中，一般情况的需求都是比较复杂得多。<br>如果这时，产品来跟你说，我不仅需要两个数相加的，我还要相减，相乘，相除，求余等等功能。这时候，我们怎么办呢？<br>当然，你会想，这有什么难的。直接将这堆函数都写出来不就完了。然后都放在一个js文件里面。需要的时候，就调用它就好了。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// 加</span>
+<span class="token keyword">function</span> <span class="token function">add</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> n1 <span class="token operator">+</span> n2<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">// 减</span>
+<span class="token keyword">function</span> <span class="token function">sub</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> n1 <span class="token operator">-</span> n2<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">// 乘</span>
+<span class="token keyword">function</span> <span class="token function">mul</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> n1 <span class="token operator">*</span> n2<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">// 除</span>
+<span class="token keyword">function</span> <span class="token function">div</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> n1 <span class="token operator">/</span> n2<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">// 求余</span>
+<span class="token keyword">function</span> <span class="token function">sur</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> n1 <span class="token operator">%</span> n2<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>OK，现在已经实现我们所需要的所有功能。并且我们也把这些函数都写到一个js里面了。如果是一个人在用，那么可以很清楚知道自己是否已经定义了什么，并且知道自己写了什么内容，我在哪个页面需要，那么就直接引入这个js文件就可以搞定了。<br>不过，如果是两个人以上的团队，或者你与别人一起协作写代码，这时候，另一个人并不知道你是否写了add方法，这时他也定义了同样的add方法。那么你们之间就会产生<strong>命名冲突</strong>，一般称之为变量的 <strong>全局污染</strong></p>
+<h4 id="用全局对象包装"><a href="#用全局对象包装" class="headerlink" title="用全局对象包装"></a>用全局对象包装</h4><p>为了解决这种全局变量污染的问题。这时，我们可以定义一个js对象来接收我们这些工具函数。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">var</span> plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+    add<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//加</span>
+    sub<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//减</span>
+    mul<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//乘</span>
+    div<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//除</span>
+    sur<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span> <span class="token comment" spellcheck="true">//余</span>
+<span class="token punctuation">}</span>
+<span class="token comment" spellcheck="true">// 调用</span>
+plugin<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
+</code></pre>
+<p>上面的方式，约定好此插件名为<code>plugin</code>，让团队成员都要遵守命名规则，在一定程度上已经解决了全局污染的问题。在团队协作中只要约定好命名规则了，告知其它同学即可以。当然不排除有个别人，接手你的项目，并不知道此全局变量已经定义，则他又定义了一次并赋值，这时，就会把你的对象覆盖掉。当然，可能你会这么干来解决掉命名冲突问题：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span>plugin<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token comment" spellcheck="true">//这里的if条件也可以用： (typeof plugin == 'undefined')</span>
+    <span class="token keyword">var</span> plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 以此写你的函数逻辑</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>或者也可以这样写：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">var</span> plugin<span class="token punctuation">;</span>
+<span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span>plugin<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>这样子，就不会存在命名上的冲突了。</p>
+<blockquote>
+<p>也许有同学会疑问，为什么可以在此声明plugin变量？实际上js的解释执行，会把所有声明都提前。如果一个变量已经声明过，后面如果不是在函数内声明的，则是没有影响的。所以，就算在别的地方声明过var plugin，我同样也以可以在这里再次声明一次。关于声明的相关资料可以看阮一锋的<a href="http://www.ruanyifeng.com/blog/2011/05/how_to_judge_the_existence_of_a_global_object_in_javascript.html" target="_blank" rel="external">如何判断Javascript对象是否存在</a>。</p>
+</blockquote>
+<p>基本上，这就可以算是一个插件了。解决了全局污染问题，方法函数可以抽出来放到一单独的文件里面去。</p>
+<h4 id="利用闭包包装"><a href="#利用闭包包装" class="headerlink" title="利用闭包包装"></a>利用闭包包装</h4><p>上面的例子，虽然可以实现了插件的基本上的功能。不过我们的plugin对象，是定义在全局域里面的。我们知道，js变量的调用，从全局作用域上找查的速度会比在私有作用域里面慢得多得多。所以，我们最好将插件逻辑写在一个私有作用域中。<br>实现私有作用域，最好的办法就是使用闭包。可以把插件当做一个函数，插件内部的变量及函数的私有变量，为了在调用插件后依旧能使用其功能，闭包的作用就是延长函数(插件)内部变量的生命周期，使得插件函数可以重复调用，而不影响用户自身作用域。<br>故需将插件的所有功能写在一个立即执行函数中：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token punctuation">;</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>global<span class="token punctuation">,</span>undefined<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+        add<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span>
+        <span class="token operator">...</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 最后将插件对象暴露给全局对象</span>
+    <span class="token string">'plugin'</span> <span class="token keyword">in</span> global <span class="token operator">&amp;&amp;</span> global<span class="token punctuation">.</span>plugin <span class="token operator">=</span> plugin<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">(</span>window<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>对上面的代码段传参问题进行解释一下：</p>
+<ol>
+<li>在定义插件之前添加一个分号，可以解决js合并时可能会产生的错误问题；</li>
+<li>undefined在老一辈的浏览器是不被支持的，直接使用会报错，js框架要考虑到兼容性，因此增加一个形参undefined，就算有人把外面的 <code>undefined</code> 定义了，里面的 undefined 依然不受影响；</li>
+<li>把window对象作为参数传入，是避免了函数执行的时候到外部去查找。</li>
+</ol>
+<p>其实，我们觉得直接传window对象进去，我觉得还是不太妥当。我们并不确定我们的插件就一定用于浏览器上，也有可能使用在一些非浏览端上。所以我们还可以这么干，我们不传参数，直接取当前的全局this对象为作顶级对象用。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token punctuation">;</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>global<span class="token punctuation">,</span>undefined<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token string">"use strict"</span> <span class="token comment" spellcheck="true">//使用js严格模式检查，使语法更规范</span>
+    <span class="token keyword">var</span> _global<span class="token punctuation">;</span>
+    <span class="token keyword">var</span> plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+        add<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span>
+        <span class="token operator">...</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 最后将插件对象暴露给全局对象</span>
+    _global <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token keyword">this</span> <span class="token operator">||</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> eval<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token string">'this'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token operator">!</span><span class="token punctuation">(</span><span class="token string">'plugin'</span> <span class="token keyword">in</span> _global<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>_global<span class="token punctuation">.</span>plugin <span class="token operator">=</span> plugin<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>如此，我们不需要传入任何参数，并且解决了插件对环境的依事性。如此我们的插件可以在任何宿主环境上运行了。</p>
+<blockquote>
+<p>上面的代码段中有段奇怪的表达式：<code>(0, eval)(&#39;this&#39;)</code>，实际上<code>(0,eval)</code>是一个表达式，这个表达式执行之后的结果就是<code>eval</code>这一句相当于执行<code>eval(&#39;this&#39;)</code>的意思，详细解释看此篇：<a href="http://www.jianshu.com/p/205a4033010a" target="_blank" rel="external">(0,eval)(‘this’)释义</a>或者看一下这篇<a href="http://www.cnblogs.com/qianlegeqian/p/3950044.html" target="_blank" rel="external">(0,eval)(‘this’)</a></p>
+</blockquote>
+<p>关于立即自执行函数，有两种写法：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// 写法一</span>
+<span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">//写法二</span>
+<span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>上面的两种写法是没有区别的。都是正确的写法。个人建议使用第二种写法。这样子更像一个整体。</p>
+<blockquote>
+<p><strong>附加一点知识：</strong><br>js里面<code>()</code>括号就是将代码结构变成表达式，被包在<code>()</code>里面的变成了表达式之后，则就会立即执行，js中将一段代码变成表达式有很多种方式，比如：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">void</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 或者</span>
+<span class="token operator">!</span><span class="token keyword">function</span> <span class="token function">foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 或者</span>
+<span class="token operator">+</span><span class="token keyword">function</span> <span class="token function">foot</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token operator">...</span><span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>当然，我们不推荐你这么用。而且乱用可能会产生一些歧义。</p>
+</blockquote>
+<p>到这一步，我们的插件的基础结构就已经算是完整的了。</p>
+<h4 id="使用模块化的规范包装"><a href="#使用模块化的规范包装" class="headerlink" title="使用模块化的规范包装"></a>使用模块化的规范包装</h4><p>虽然上面的包装基本上已经算是ok了的。但是如果是多个人一起开发一个大型的插件，这时我们要该怎么办呢？多人合作，肯定会产生多个文件，每个人负责一个小功能，那么如何才能将所有人开发的代码集合起来呢？这是一个讨厌的问题。要实现协作开发插件，必须具备如下条件：</p>
+<ul>
+<li>每功能互相之间的依赖必须要明确，则必须严格按照依赖的顺序进行合并或者加载</li>
+<li>每个子功能分别都要是一个闭包，并且将公共的接口暴露到共享域也即是一个被主函数暴露的公共对象</li>
+</ul>
+<p>关键如何实现，有很多种办法。最笨的办法就是按顺序加载js</p>
+<pre class=" language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text/javascript<span class="token punctuation">"</span></span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>part1.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text/javascript<span class="token punctuation">"</span></span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>part2.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text/javascript<span class="token punctuation">"</span></span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>part3.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+...
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">type</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>text/javascript<span class="token punctuation">"</span></span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>main.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+</code></pre>
+<p>但是不推荐这么做，这样做与我们所追求的插件的封装性相背。<br>不过现在前端界有一堆流行的模块加载器，比如<a href="https://github.com/requirejs/requirejs" target="_blank" rel="external">require</a>、<a href="https://github.com/seajs/seajs" target="_blank" rel="external">seajs</a>，或者也可以像类似于Node的方式进行加载，不过在浏览器端，我们还得利用打包器来实现模块加载，比如<a href="https://github.com/substack/node-browserify/" target="_blank" rel="external">browserify</a>。不过在此不谈如何进行模块化打包或者加载的问题，如有问题的同学可以去上面的链接上看文档学习。<br>为了实现插件的模块化并且让我们的插件也是一个模块，我们就得让我们的插件也实现模块化的机制。<br>我们实际上，只要判断是否存在加载器，如果存在加载器，我们就使用加载器，如果不存在加载器。我们就使用顶级域对象。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> module <span class="token operator">!==</span> <span class="token string">"undefined"</span> <span class="token operator">&amp;&amp;</span> module<span class="token punctuation">.</span>exports<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    module<span class="token punctuation">.</span>exports <span class="token operator">=</span> plugin<span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> define <span class="token operator">===</span> <span class="token string">"function"</span> <span class="token operator">&amp;&amp;</span> define<span class="token punctuation">.</span>amd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">define</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token keyword">return</span> plugin<span class="token punctuation">;</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    _globals<span class="token punctuation">.</span>plugin <span class="token operator">=</span> plugin<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>这样子我们的完整的插件的样子应该是这样子的：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// plugin.js</span>
+<span class="token punctuation">;</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>undefined<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token string">"use strict"</span>
+    <span class="token keyword">var</span> _global<span class="token punctuation">;</span>
+    <span class="token keyword">var</span> plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+        add<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> n1 <span class="token operator">+</span> n2<span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//加</span>
+        sub<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> n1 <span class="token operator">-</span> n2<span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//减</span>
+        mul<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> n1 <span class="token operator">*</span> n2<span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//乘</span>
+        div<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> n1 <span class="token operator">/</span> n2<span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//除</span>
+        sur<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span>n1<span class="token punctuation">,</span>n2<span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> n1 <span class="token operator">%</span> n2<span class="token punctuation">;</span> <span class="token punctuation">}</span> <span class="token comment" spellcheck="true">//余</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 最后将插件对象暴露给全局对象</span>
+    _global <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token keyword">this</span> <span class="token operator">||</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> eval<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token string">'this'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> module <span class="token operator">!==</span> <span class="token string">"undefined"</span> <span class="token operator">&amp;&amp;</span> module<span class="token punctuation">.</span>exports<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        module<span class="token punctuation">.</span>exports <span class="token operator">=</span> plugin<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> define <span class="token operator">===</span> <span class="token string">"function"</span> <span class="token operator">&amp;&amp;</span> define<span class="token punctuation">.</span>amd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">define</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token keyword">return</span> plugin<span class="token punctuation">;</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token operator">!</span><span class="token punctuation">(</span><span class="token string">'plugin'</span> <span class="token keyword">in</span> _global<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>_global<span class="token punctuation">.</span>plugin <span class="token operator">=</span> plugin<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>我们引入了插件之后，则可以直接使用plugin对象。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">with</span><span class="token punctuation">(</span>plugin<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 3</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">sub</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 1</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">mul</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 2</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">div</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 2</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">sur</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 0</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="插件的API"><a href="#插件的API" class="headerlink" title="插件的API"></a>插件的API</h3><h3 id="插件的默认参数"><a href="#插件的默认参数" class="headerlink" title="插件的默认参数"></a>插件的默认参数</h3><p>我们知道，函数是可以设置默认参数这种说法，而不管我们是否传有参数，我们都应该返回一个值以告诉用户我做了怎样的处理，比如：</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token keyword">function</span> <span class="token function">add</span><span class="token punctuation">(</span>param<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">var</span> args <span class="token operator">=</span> <span class="token operator">!</span><span class="token operator">!</span>param <span class="token operator">?</span> Array<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>slice<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>arguments<span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> args<span class="token punctuation">.</span><span class="token function">reduce</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>pre<span class="token punctuation">,</span>cur<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">return</span> pre <span class="token operator">+</span> cur<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//不传参，结果输出0，则这里已经设置了默认了参数为空数组</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token punctuation">,</span><span class="token number">4</span><span class="token punctuation">,</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">//传参，结果输出15</span>
+</code></pre>
+<p>则作为一个健壮的js插件，我们应该把一些基本的状态参数添加到我们需要的插件上去。<br>假设还是上面的加减乘除余的需求，我们如何实现插件的默认参数呢？道理其实是一样的。</p>
+<pre class=" language-javascript"><code class="language-javascript"><span class="token comment" spellcheck="true">// plugin.js</span>
+<span class="token punctuation">;</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span>undefined<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token string">"use strict"</span>
+    <span class="token keyword">var</span> _global<span class="token punctuation">;</span>
+
+    <span class="token keyword">function</span> <span class="token function">result</span><span class="token punctuation">(</span>args<span class="token punctuation">,</span>fn<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">var</span> argsArr <span class="token operator">=</span> Array<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>slice<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>argsArr<span class="token punctuation">.</span>length <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">return</span> argsArr<span class="token punctuation">.</span><span class="token function">reduce</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">var</span> plugin <span class="token operator">=</span> <span class="token punctuation">{</span>
+        add<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token function">result</span><span class="token punctuation">(</span>arguments<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>pre<span class="token punctuation">,</span>cur<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                <span class="token keyword">return</span> pre <span class="token operator">+</span> cur<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//加</span>
+        sub<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token function">result</span><span class="token punctuation">(</span>arguments<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>pre<span class="token punctuation">,</span>cur<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                <span class="token keyword">return</span> pre <span class="token operator">-</span> cur<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//减</span>
+        mul<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token function">result</span><span class="token punctuation">(</span>arguments<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>pre<span class="token punctuation">,</span>cur<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                <span class="token keyword">return</span> pre <span class="token operator">*</span> cur<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//乘</span>
+        div<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token function">result</span><span class="token punctuation">(</span>arguments<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>pre<span class="token punctuation">,</span>cur<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                <span class="token keyword">return</span> pre <span class="token operator">/</span> cur<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span><span class="token comment" spellcheck="true">//除</span>
+        sur<span class="token punctuation">:</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token function">result</span><span class="token punctuation">(</span>arguments<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span>pre<span class="token punctuation">,</span>cur<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                <span class="token keyword">return</span> pre <span class="token operator">%</span> cur<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token comment" spellcheck="true">//余</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 最后将插件对象暴露给全局对象</span>
+    _global <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token keyword">this</span> <span class="token operator">||</span> <span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> eval<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token string">'this'</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> module <span class="token operator">!==</span> <span class="token string">"undefined"</span> <span class="token operator">&amp;&amp;</span> module<span class="token punctuation">.</span>exports<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        module<span class="token punctuation">.</span>exports <span class="token operator">=</span> plugin<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> define <span class="token operator">===</span> <span class="token string">"function"</span> <span class="token operator">&amp;&amp;</span> define<span class="token punctuation">.</span>amd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">define</span><span class="token punctuation">(</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">{</span><span class="token keyword">return</span> plugin<span class="token punctuation">;</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token operator">!</span><span class="token punctuation">(</span><span class="token string">'plugin'</span> <span class="token keyword">in</span> _global<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>_global<span class="token punctuation">.</span>plugin <span class="token operator">=</span> plugin<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 输出结果为：</span>
+<span class="token keyword">with</span><span class="token punctuation">(</span>plugin<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 0</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">sub</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 0</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">mul</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 0</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">div</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 0</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">sur</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 0</span>
+
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 3</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">sub</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 1</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">mul</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 2</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">div</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 2</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">sur</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 0</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="插件的API接口"><a href="#插件的API接口" class="headerlink" title="插件的API接口"></a>插件的API接口</h4><p>我们知道，设计一下插件，肯定不是死的，我们得像函数一样，得让用户提供自己的参数去实现用户的需求。则我们的插件需要提供一个修改默认参数的入口。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;作为一个前端er，如果不会写一个小插件，都不好意思说自己是混前端界的。写还不能依赖jquery之类的工具库，否则装得不够高端。那么，如何才能装起来让自己看起来逼格更高呢？当然是利用js纯原生的写法啦。以前一直说，掌握了js原生，就基本上可以解决前端的所有脚本交互工作了，这话
+    
+    </summary>
+    
+      <category term="技术" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+      <category term="应用" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/%E5%BA%94%E7%94%A8/"/>
+    
+    
+      <category term="javascript" scheme="https://huangguangjie.github.io/tags/javascript/"/>
+    
+      <category term="插件" scheme="https://huangguangjie.github.io/tags/%E6%8F%92%E4%BB%B6/"/>
+    
+      <category term="自定义" scheme="https://huangguangjie.github.io/tags/%E8%87%AA%E5%AE%9A%E4%B9%89/"/>
+    
+  </entry>
+  
+  <entry>
     <title>从实际应用中去理解Promise</title>
-    <link href="https://huangguangjie.github.io/2017/04/04/promise/"/>
-    <id>https://huangguangjie.github.io/2017/04/04/promise/</id>
-    <published>2017-04-03T16:38:26.398Z</published>
-    <updated>2017-04-04T09:10:05.427Z</updated>
+    <link href="https://huangguangjie.github.io/2017/04/02/promise/"/>
+    <id>https://huangguangjie.github.io/2017/04/02/promise/</id>
+    <published>2017-04-01T16:00:00.000Z</published>
+    <updated>2017-04-05T12:45:47.031Z</updated>
     
     <content type="html"><![CDATA[<p>在es6使用已经很普遍的今天，我再说Promise各种API及其原理的话也不过是锦上添花。Promise的重要性，我们不必多讲，相信大家都知道出现Promise的意义及其对js异步编程上的作用是多么巨大。不过，说真，要真正去理解使用这个对象，确实是有些困难，特别是对我这种理解新东西总是有困难症的人来说更甚。所以，我的办法就是重重复复地看相关的文章及api文档，以达到自己能使用及理解。在理解Promise之前，先来看一下异步的实现过程。</p>
 <h3 id="为什么要用Promise"><a href="#为什么要用Promise" class="headerlink" title="为什么要用Promise"></a>为什么要用Promise</h3><p>在说Promise之前，我们得先来确定一下为什么要有这个对象。</p>
@@ -277,9 +563,7 @@ Promise<span class="token punctuation">.</span><span class="token function">race
     
       <category term="技术" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/"/>
     
-      <category term="心得" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/%E5%BF%83%E5%BE%97/"/>
-    
-      <category term="javascript" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/%E5%BF%83%E5%BE%97/javascript/"/>
+      <category term="应用" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/%E5%BA%94%E7%94%A8/"/>
     
     
       <category term="es6" scheme="https://huangguangjie.github.io/tags/es6/"/>
@@ -291,114 +575,11 @@ Promise<span class="token punctuation">.</span><span class="token function">race
   </entry>
   
   <entry>
-    <title>Yarn,或将取代npm客户端</title>
-    <link href="https://huangguangjie.github.io/2017/04/04/yarn-article/"/>
-    <id>https://huangguangjie.github.io/2017/04/04/yarn-article/</id>
-    <published>2017-04-03T16:36:52.309Z</published>
-    <updated>2017-04-03T16:36:52.309Z</updated>
-    
-    <content type="html"><![CDATA[<p>Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。</p>
-<h3 id="为什么用yarn"><a href="#为什么用yarn" class="headerlink" title="为什么用yarn"></a>为什么用yarn</h3><h4 id="非常快，非常非常快"><a href="#非常快，非常非常快" class="headerlink" title="非常快，非常非常快"></a>非常快，非常非常快</h4><p>yarn 缓存了每次你下载的模块，所以同样模块同样的版本不会发送第二次下载请求，对于没有缓存的模块， yarn 也可以通过并行的网络请求最大限度利用网络资源。现在真的是没有什么几十秒安装不完的依赖的。一个 50 个依赖的 webpack + babel 项目可以在 20 秒左右安装完成。</p>
-<h4 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h4><p>yarn在开始安装一个包之前会先用 checksums 来验证，你不用担心本地的缓存的包被破坏了导致安装失败。</p>
-<h4 id="可靠"><a href="#可靠" class="headerlink" title="可靠"></a>可靠</h4><p>被一群喜欢喵星人的开发者维护，以及有 FaceBook 在 production 环境中使用。完善的测试和基于 flow type 的 code base。保证各平台依赖的一致性。</p>
-<h4 id="网络优化"><a href="#网络优化" class="headerlink" title="网络优化"></a>网络优化</h4><p>力求网络资源最大利用化，让资源下载完美队列执行，避免大量的无用请求，下载失败会自动重新请求，避免整个安装过程失败</p>
-<h4 id="扁平化模式"><a href="#扁平化模式" class="headerlink" title="扁平化模式"></a>扁平化模式</h4><p>对于不匹配的依赖版本的包创立一个独立的包，避免创建重复的。</p>
-<h4 id="以及很多令人感动的小改进"><a href="#以及很多令人感动的小改进" class="headerlink" title="以及很多令人感动的小改进"></a>以及很多令人感动的小改进</h4><ol>
-<li>有些 npm 包会抛出 warning 提示信息，在一起 npm install 的时候只有一个名字你完全不知道是哪个包的哪个包的哪个包抛出的这个信息，而 yarn 改善了这一点。</li>
-<li><code>yarn ls</code> 会高亮出所有在 package.json 的 dependencies 里的依赖，增强可读性。</li>
-<li>每一条命令都会显示执行的时间。</li>
-<li>默认生成 lockfile . 保证 yarn 每次安装相同版本的依赖，npm shrinkwrap 会丧失掉同步性如果你忘了生成它。</li>
-<li><code>yarn why &lt;name&gt;</code> 这条命令可以告诉你为什么一个依赖会被安装到你的项目中。</li>
-</ol>
-<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>安装yarn其实非常简单，可以使用npm进行安装yarn包。其<a href="https://yarnpkg.com/zh-Hans/" target="_blank" rel="external">官网</a>也有相应的安装文档:<a href="https://yarnpkg.com/zh-Hans/docs" target="_blank" rel="external">yarn docs</a></p>
-<pre class=" language-bash"><code class="language-bash">$ <span class="token function">npm</span> <span class="token function">install</span> -g yarn
-</code></pre>
-<p>安装完成之后可以查看版本号</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn --version
-</code></pre>
-<p>或者</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn -v
-</code></pre>
-<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>切换到自己的项目目录，执行</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn init
-</code></pre>
-<p>然后照着提示依次输入参数就OK了。<br>如果觉得麻烦，可以直接执行</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn init -y
-</code></pre>
-<p>这样可以直接创建最简的一个项目。其中包含了package.json文件。</p>
-<h4 id="添加包依赖"><a href="#添加包依赖" class="headerlink" title="添加包依赖"></a>添加包依赖</h4><p>接下来可以直接在此添加包依赖了,会自动安装最新版本，注意会覆盖指定版本号</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
-</code></pre>
-<p>或者</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
-</code></pre>
-<p>你会发现，在客户端会打印一出一堆信息如下，添加jquery依赖：</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn add jquery
-yarn add v0.21.3
-info No lockfile found.
-<span class="token punctuation">[</span>1/4<span class="token punctuation">]</span> Resolving packages<span class="token punctuation">..</span>.
-<span class="token punctuation">[</span>2/4<span class="token punctuation">]</span> Fetching packages<span class="token punctuation">..</span>.
-<span class="token punctuation">[</span>3/4<span class="token punctuation">]</span> Linking dependencies<span class="token punctuation">..</span>.
-█████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-█████████████████████████████████░░░░░░░░░░░░░
-████████████████████████████████████████
-████████████████████████████████████████
-<span class="token punctuation">[</span>4/4<span class="token punctuation">]</span> Building fresh packages<span class="token punctuation">..</span>.
-success Saved lockfile.
-success Saved 1 new dependency.
-└─ jquery@3.2.1
-Done <span class="token keyword">in</span> 4.28s.
-</code></pre>
-<p>这时在当前目录中自动添加了一个yarn.lock文件，用于记录所有的包依赖信息。</p>
-<h4 id="更新包依赖"><a href="#更新包依赖" class="headerlink" title="更新包依赖"></a>更新包依赖</h4><p>更新某包</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
-</code></pre>
-<p>更新指定版本的包</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
-</code></pre>
-<p>更新到指定某个标签上的包</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
-</code></pre>
-<h4 id="移除依赖"><a href="#移除依赖" class="headerlink" title="移除依赖"></a>移除依赖</h4><pre class=" language-bash"><code class="language-bash">$ yarn remove <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
-</code></pre>
-<p>后面的参数可以与更新包的类似。</p>
-<h4 id="开工"><a href="#开工" class="headerlink" title="开工"></a>开工</h4><p>在多人团队协作的时候，拉到代码之后，可以类似于npm一样，执行</p>
-<pre class=" language-bash"><code class="language-bash">$ yarn <span class="token function">install</span>
-</code></pre>
-<p>即可以开工啦！</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>yarn管理器有一个很重要的文件需要注意，就是yarn.lock，这个是用来依赖的正确性，快速可靠安装的；是执行cli的时候自动生成的，在项目的根目录下，需要保留！！！！不要编辑它，这是自动生成的</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。&lt;/p&gt;
-&lt;h3 id=&quot;为什么用yarn&quot;&gt;&lt;a href=&quot;#为什么用yarn&quot; class=&quot;header
-    
-    </summary>
-    
-      <category term="技术" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/"/>
-    
-      <category term="yarn" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/yarn/"/>
-    
-      <category term="npm" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/yarn/npm/"/>
-    
-    
-      <category term="工具" scheme="https://huangguangjie.github.io/tags/%E5%B7%A5%E5%85%B7/"/>
-    
-      <category term="yarn" scheme="https://huangguangjie.github.io/tags/yarn/"/>
-    
-      <category term="npm" scheme="https://huangguangjie.github.io/tags/npm/"/>
-    
-      <category term="node" scheme="https://huangguangjie.github.io/tags/node/"/>
-    
-  </entry>
-  
-  <entry>
     <title>Redux之中间件applyMiddleware源码解读</title>
-    <link href="https://huangguangjie.github.io/2017/04/04/redux-applyMiddleware/"/>
-    <id>https://huangguangjie.github.io/2017/04/04/redux-applyMiddleware/</id>
-    <published>2017-04-03T16:36:52.308Z</published>
-    <updated>2017-04-03T16:36:52.308Z</updated>
+    <link href="https://huangguangjie.github.io/2017/03/30/redux-applyMiddleware/"/>
+    <id>https://huangguangjie.github.io/2017/03/30/redux-applyMiddleware/</id>
+    <published>2017-03-29T16:00:00.000Z</published>
+    <updated>2017-04-05T12:46:50.658Z</updated>
     
     <content type="html"><![CDATA[<p>在学习了redux过程中，了解到中间件这个名词，但是我看了十遍，也完全就是懵逼的状态。于是又重复敲了几次代码也不能掌握这个东西到底是什么？看官网文档，那么些专业名词，让人半天摸不着头脑。我们从流程图中知道，react组件在执行过程中，特别是在中间插入各种奇怪的需求的时候，不可能每每都是改动一下代码逻辑，而是用一种方便插拔的方式添加进去。但是这个过程说得简单，理解也容易，问题到底是怎么实现的呢？本人这样的半吊子水平，要理解这么高深的东西，真是太困难了。反复地摸索过程中，感觉摸到一些门径，于是斗胆做一下我的解读，如有不对，欢迎斧正！</p>
 <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在学习appleyMiddleware中间件之前，必须要有一些知识储备。列出一下：</p>
@@ -611,6 +792,105 @@ dispatch <span class="token operator">=</span> <span class="token function">comp
       <category term="react" scheme="https://huangguangjie.github.io/tags/react/"/>
     
       <category term="redux" scheme="https://huangguangjie.github.io/tags/redux/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Yarn,或将取代npm客户端</title>
+    <link href="https://huangguangjie.github.io/2017/03/29/yarn-article/"/>
+    <id>https://huangguangjie.github.io/2017/03/29/yarn-article/</id>
+    <published>2017-03-28T16:00:00.000Z</published>
+    <updated>2017-04-05T12:46:56.100Z</updated>
+    
+    <content type="html"><![CDATA[<p>Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。</p>
+<h3 id="为什么用yarn"><a href="#为什么用yarn" class="headerlink" title="为什么用yarn"></a>为什么用yarn</h3><h4 id="非常快，非常非常快"><a href="#非常快，非常非常快" class="headerlink" title="非常快，非常非常快"></a>非常快，非常非常快</h4><p>yarn 缓存了每次你下载的模块，所以同样模块同样的版本不会发送第二次下载请求，对于没有缓存的模块， yarn 也可以通过并行的网络请求最大限度利用网络资源。现在真的是没有什么几十秒安装不完的依赖的。一个 50 个依赖的 webpack + babel 项目可以在 20 秒左右安装完成。</p>
+<h4 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h4><p>yarn在开始安装一个包之前会先用 checksums 来验证，你不用担心本地的缓存的包被破坏了导致安装失败。</p>
+<h4 id="可靠"><a href="#可靠" class="headerlink" title="可靠"></a>可靠</h4><p>被一群喜欢喵星人的开发者维护，以及有 FaceBook 在 production 环境中使用。完善的测试和基于 flow type 的 code base。保证各平台依赖的一致性。</p>
+<h4 id="网络优化"><a href="#网络优化" class="headerlink" title="网络优化"></a>网络优化</h4><p>力求网络资源最大利用化，让资源下载完美队列执行，避免大量的无用请求，下载失败会自动重新请求，避免整个安装过程失败</p>
+<h4 id="扁平化模式"><a href="#扁平化模式" class="headerlink" title="扁平化模式"></a>扁平化模式</h4><p>对于不匹配的依赖版本的包创立一个独立的包，避免创建重复的。</p>
+<h4 id="以及很多令人感动的小改进"><a href="#以及很多令人感动的小改进" class="headerlink" title="以及很多令人感动的小改进"></a>以及很多令人感动的小改进</h4><ol>
+<li>有些 npm 包会抛出 warning 提示信息，在一起 npm install 的时候只有一个名字你完全不知道是哪个包的哪个包的哪个包抛出的这个信息，而 yarn 改善了这一点。</li>
+<li><code>yarn ls</code> 会高亮出所有在 package.json 的 dependencies 里的依赖，增强可读性。</li>
+<li>每一条命令都会显示执行的时间。</li>
+<li>默认生成 lockfile . 保证 yarn 每次安装相同版本的依赖，npm shrinkwrap 会丧失掉同步性如果你忘了生成它。</li>
+<li><code>yarn why &lt;name&gt;</code> 这条命令可以告诉你为什么一个依赖会被安装到你的项目中。</li>
+</ol>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>安装yarn其实非常简单，可以使用npm进行安装yarn包。其<a href="https://yarnpkg.com/zh-Hans/" target="_blank" rel="external">官网</a>也有相应的安装文档:<a href="https://yarnpkg.com/zh-Hans/docs" target="_blank" rel="external">yarn docs</a></p>
+<pre class=" language-bash"><code class="language-bash">$ <span class="token function">npm</span> <span class="token function">install</span> -g yarn
+</code></pre>
+<p>安装完成之后可以查看版本号</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn --version
+</code></pre>
+<p>或者</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn -v
+</code></pre>
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>切换到自己的项目目录，执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn init
+</code></pre>
+<p>然后照着提示依次输入参数就OK了。<br>如果觉得麻烦，可以直接执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn init -y
+</code></pre>
+<p>这样可以直接创建最简的一个项目。其中包含了package.json文件。</p>
+<h4 id="添加包依赖"><a href="#添加包依赖" class="headerlink" title="添加包依赖"></a>添加包依赖</h4><p>接下来可以直接在此添加包依赖了,会自动安装最新版本，注意会覆盖指定版本号</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
+</code></pre>
+<p>或者</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
+</code></pre>
+<p>你会发现，在客户端会打印一出一堆信息如下，添加jquery依赖：</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn add jquery
+yarn add v0.21.3
+info No lockfile found.
+<span class="token punctuation">[</span>1/4<span class="token punctuation">]</span> Resolving packages<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>2/4<span class="token punctuation">]</span> Fetching packages<span class="token punctuation">..</span>.
+<span class="token punctuation">[</span>3/4<span class="token punctuation">]</span> Linking dependencies<span class="token punctuation">..</span>.
+█████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+█████████████████████████████████░░░░░░░░░░░░░
+████████████████████████████████████████
+████████████████████████████████████████
+<span class="token punctuation">[</span>4/4<span class="token punctuation">]</span> Building fresh packages<span class="token punctuation">..</span>.
+success Saved lockfile.
+success Saved 1 new dependency.
+└─ jquery@3.2.1
+Done <span class="token keyword">in</span> 4.28s.
+</code></pre>
+<p>这时在当前目录中自动添加了一个yarn.lock文件，用于记录所有的包依赖信息。</p>
+<h4 id="更新包依赖"><a href="#更新包依赖" class="headerlink" title="更新包依赖"></a>更新包依赖</h4><p>更新某包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+</code></pre>
+<p>更新指定版本的包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>version<span class="token punctuation">]</span>
+</code></pre>
+<p>更新到指定某个标签上的包</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn update <span class="token punctuation">[</span>package<span class="token punctuation">]</span>@<span class="token punctuation">[</span>tag<span class="token punctuation">]</span>
+</code></pre>
+<h4 id="移除依赖"><a href="#移除依赖" class="headerlink" title="移除依赖"></a>移除依赖</h4><pre class=" language-bash"><code class="language-bash">$ yarn remove <span class="token punctuation">[</span>package<span class="token punctuation">]</span>
+</code></pre>
+<p>后面的参数可以与更新包的类似。</p>
+<h4 id="开工"><a href="#开工" class="headerlink" title="开工"></a>开工</h4><p>在多人团队协作的时候，拉到代码之后，可以类似于npm一样，执行</p>
+<pre class=" language-bash"><code class="language-bash">$ yarn <span class="token function">install</span>
+</code></pre>
+<p>即可以开工啦！</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>yarn管理器有一个很重要的文件需要注意，就是yarn.lock，这个是用来依赖的正确性，快速可靠安装的；是执行cli的时候自动生成的，在项目的根目录下，需要保留！！！！不要编辑它，这是自动生成的</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。&lt;/p&gt;
+&lt;h3 id=&quot;为什么用yarn&quot;&gt;&lt;a href=&quot;#为什么用yarn&quot; class=&quot;header
+    
+    </summary>
+    
+      <category term="技术" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+      <category term="工具" scheme="https://huangguangjie.github.io/categories/%E6%8A%80%E6%9C%AF/%E5%B7%A5%E5%85%B7/"/>
+    
+    
+      <category term="yarn" scheme="https://huangguangjie.github.io/tags/yarn/"/>
+    
+      <category term="npm" scheme="https://huangguangjie.github.io/tags/npm/"/>
+    
+      <category term="node" scheme="https://huangguangjie.github.io/tags/node/"/>
     
   </entry>
   
