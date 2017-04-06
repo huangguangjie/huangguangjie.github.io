@@ -8,6 +8,7 @@ tags:
 - 插件
 - 自定义
 date: 2017/4/5
+foldmethod: syntax
 ---
 
 作为一个前端er，如果不会写一个小插件，都不好意思说自己是混前端界的。写还不能依赖jquery之类的工具库，否则装得不够高端。那么，如何才能装起来让自己看起来逼格更高呢？当然是利用js纯原生的写法啦。以前一直说，掌握了js原生，就基本上可以解决前端的所有脚本交互工作了，这话大体上是有些浮夸了。不过，也从侧面说明了原生js在前端中占着多么重要的一面。好了。废话不多说。咱们就来看一下怎么去做一个自己的js插件吧。
@@ -21,8 +22,8 @@ date: 2017/4/5
 1. 插件自身的作用域与用户当前的作用域相互独立，也就是插件内部的私有变量不能影响使用者的环境变量；
 2. 插件需具备默认设置参数；
 3. 插件除了具备已实现的基本功能外，需提供部分API，使用者可以通过该API修改插件功能的默认参数，从而实现用户自定义插件效果；
-4. 插件需提供监听入口，及针对指定元素进行监听，使得该元素与插件响应达到插件效果；
-5. 插件支持链式调用。
+4. 插件支持链式调用；
+5. 插件需提供监听入口，及针对指定元素进行监听，使得该元素与插件响应达到插件效果。
 
 关于插件封装的条件，可以查看一篇文章：[原生JavaScript插件编写指南](http://geocld.github.io/2016/03/10/javascript_plugin/)
 而我想要说明的是，如何一步一步地实现我的插件封装。所以，我会先从简单的方法函数来做起。
@@ -224,7 +225,7 @@ with(plugin){
 ```
 
 ### 插件的API
-### 插件的默认参数
+#### 插件的默认参数
 我们知道，函数是可以设置默认参数这种说法，而不管我们是否传有参数，我们都应该返回一个值以告诉用户我做了怎样的处理，比如：
 ```javascript
 function add(param){
@@ -307,5 +308,574 @@ with(plugin){
     console.log(sur(2,1)); // 0
 }
 ```
-#### 插件的API接口
-我们知道，设计一下插件，肯定不是死的，我们得像函数一样，得让用户提供自己的参数去实现用户的需求。则我们的插件需要提供一个修改默认参数的入口。
+实际上，插件都有自己的默认参数，就以我们最为常见的表单验证插件为例：[validate.js](https://github.com/rickharrison/validate.js)
+```javascript
+(function(window, document, undefined) {
+    // 插件的默认参数
+    var defaults = {
+        messages: {
+            required: 'The %s field is required.',
+            matches: 'The %s field does not match the %s field.',
+            "default": 'The %s field is still set to default, please change.',
+            valid_email: 'The %s field must contain a valid email address.',
+            valid_emails: 'The %s field must contain all valid email addresses.',
+            min_length: 'The %s field must be at least %s characters in length.',
+            max_length: 'The %s field must not exceed %s characters in length.',
+            exact_length: 'The %s field must be exactly %s characters in length.',
+            greater_than: 'The %s field must contain a number greater than %s.',
+            less_than: 'The %s field must contain a number less than %s.',
+            alpha: 'The %s field must only contain alphabetical characters.',
+            alpha_numeric: 'The %s field must only contain alpha-numeric characters.',
+            alpha_dash: 'The %s field must only contain alpha-numeric characters, underscores, and dashes.',
+            numeric: 'The %s field must contain only numbers.',
+            integer: 'The %s field must contain an integer.',
+            decimal: 'The %s field must contain a decimal number.',
+            is_natural: 'The %s field must contain only positive numbers.',
+            is_natural_no_zero: 'The %s field must contain a number greater than zero.',
+            valid_ip: 'The %s field must contain a valid IP.',
+            valid_base64: 'The %s field must contain a base64 string.',
+            valid_credit_card: 'The %s field must contain a valid credit card number.',
+            is_file_type: 'The %s field must contain only %s files.',
+            valid_url: 'The %s field must contain a valid URL.',
+            greater_than_date: 'The %s field must contain a more recent date than %s.',
+            less_than_date: 'The %s field must contain an older date than %s.',
+            greater_than_or_equal_date: 'The %s field must contain a date that\'s at least as recent as %s.',
+            less_than_or_equal_date: 'The %s field must contain a date that\'s %s or older.'
+        },
+        callback: function(errors) {
+
+        }
+    };
+
+    var ruleRegex = /^(.+?)\[(.+)\]$/,
+        numericRegex = /^[0-9]+$/,
+        integerRegex = /^\-?[0-9]+$/,
+        decimalRegex = /^\-?[0-9]*\.?[0-9]+$/,
+        emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+        alphaRegex = /^[a-z]+$/i,
+        alphaNumericRegex = /^[a-z0-9]+$/i,
+        alphaDashRegex = /^[a-z0-9_\-]+$/i,
+        naturalRegex = /^[0-9]+$/i,
+        naturalNoZeroRegex = /^[1-9][0-9]*$/i,
+        ipRegex = /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})$/i,
+        base64Regex = /[^a-zA-Z0-9\/\+=]/i,
+        numericDashRegex = /^[\d\-\s]+$/,
+        urlRegex = /^((http|https):\/\/(\w+:{0,1}\w*@)?(\S+)|)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/,
+        dateRegex = /\d{4}-\d{1,2}-\d{1,2}/;
+
+    ... //省略后面的代码
+})(window,document);
+/*
+ * Export as a CommonJS module
+ */
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FormValidator;
+}
+```
+当然，参数既然是默认的，那就意味着我们可以随意修改参数以达到我们的需求。插件本身的意义就在于具有复用性。
+如表单验证插件，则就可以new一个对象的时候，修改我们的默认参数：
+```javascript
+var validator = new FormValidator('example_form', [{
+    name: 'req',
+    display: 'required',
+    rules: 'required'
+}, {
+    name: 'alphanumeric',
+    rules: 'alpha_numeric'
+}, {
+    name: 'password',
+    rules: 'required'
+}, {
+    name: 'password_confirm',
+    display: 'password confirmation',
+    rules: 'required|matches[password]'
+}, {
+    name: 'email',
+    rules: 'valid_email'
+}, {
+    name: 'minlength',
+    display: 'min length',
+    rules: 'min_length[8]'
+}, {
+    names: ['fname', 'lname'],
+    rules: 'required|alpha'
+}], function(errors) {
+    if (errors.length > 0) {
+        // Show the errors
+    }
+});
+```
+
+#### 插件的钩子
+我们知道，设计一下插件，参数或者其逻辑肯定不是写死的，我们得像函数一样，得让用户提供自己的参数去实现用户的需求。则我们的插件需要提供一个修改默认参数的入口。
+如上面我们说的修改默认参数，实际上也是插件给我们提供的一个API。让我们的插件更加的灵活。如果大家对API不了解，可以百度一下[API](http://baike.baidu.com/link?url=KFl22zafFz19o4AEWL1JO58Pv7uXZaykWKVpsdztsNn6CDtuZSsw-TBj3Wj0SLQDv6FBOVSgWWHT2YkhkEq7Ea)
+通常我们用的js插件，实现的方式会有多种多样的。最简单的实现逻辑就是一个方法，或者一个js对象，又或者是一个构造函数等等。
+** 然我们插件所谓的API，实际就是我们插件暴露出来的所有方法及属性。 **
+我们需求中，加减乘除余插件中，我们的API就是如下几个方法：
+```javascript
+...
+var plugin = {
+    add: function(n1,n2){ return n1 + n2; },
+    sub: function(n1,n2){ return n1 - n2; },
+    mul: function(n1,n2){ return n1 * n2; },
+    div: function(n1,n2){ return n1 / n2; },
+    sur: function(n1,n2){ return n1 % n2; } 
+}
+...
+```
+可以看到plubin暴露出来的方法则是如下几个API：
+* add
+* sub
+* mul
+* div
+* sur
+
+在插件的API中，我们常常将暴露的方法或者属性统称为**<font color="red">钩子(Hook)</font>**，方法则直接叫**<font color="red">钩子函数</font>**。这是一种形象生动的说法，就好像我们在一条绳子上放很多挂钩，我们可以按需要在上面挂东西。
+实际上，我们即知道插件可以像一条绳子上挂东西，也可以拿掉挂的东西。那么一个插件，实际上就是个形象上的**链**。不过我们上面的所有钩子都是挂在对象上的，用于实现链并不是很理想。
+
+#### 插件的链式调用（利用当前对象）
+插件并非都是能链式调用的，有些时候，我们只是用钩子来实现一个计算并返回结果，取得运算结果就可以了。但是有些时候，我们用钩子并不需要其返回结果。我们只利用其实现我们的业务逻辑，为了代码简洁与方便，我们常常将插件的调用按链式的方式进行调用。
+最常见的jquery的链式调用如下：
+```javascript
+$(<id>).show().css('color','red').width(100).height(100)....
+```
+那，如何才能将链式调用运用到我们的插件中去呢？假设我们上面的例子，如果是要按照plugin这个对象的链式进行调用，则可以将其业务结构改为：
+```javascript
+...
+var plugin = {
+    add: function(n1,n2){ return this; },
+    sub: function(n1,n2){ return this; },
+    mul: function(n1,n2){ return this; },
+    div: function(n1,n2){ return this; },
+    sur: function(n1,n2){ return this; } 
+}
+...
+```
+显示，我们只要将插件的当前对象this直接返回，则在下一下方法中，同样可以引用插件对象plugin的其它勾子方法。然后调用的时候就可以使用链式了。
+```javascript
+plugin.add().sub().mul().div().sur()  //如此调用显然没有任何实际意义
+```
+显然这样做并没有什么意义。我们这里的每一个钩子函数都只是用来计算并且获取返回值而已。而链式调用本身的意义是用来处理业务逻辑的。
+
+#### 插件的链式调用（利用原型链）
+JavaScript中，万物皆对象，所有对象都是继承自原型。JS在创建对象（不论是普通对象还是函数对象）的时候，都有一个叫做__proto__的内置属性，用于指向创建它的函数对象的原型对象prototype。关于原型问题，感兴趣的同学可以看这篇：[js原型链](http://www.jianshu.com/p/e2fd87a40dcc)
+在上面的需求中，我们可以将plugin对象改为原型的方式，则需要将plugin写成一个构造方法，我们将插件名换为`Calculate`避免因为Plugin大写的时候与Window对象中的API冲突。
+```javascript
+...
+function Calculate(){}
+Calculate.prototype.add = function(){return this;}
+Calculate.prototype.sub = function(){return this;}
+Calculate.prototype.mul = function(){return this;}
+Calculate.prototype.div = function(){return this;}
+Calculate.prototype.sur = function(){return this;}
+...
+```
+当然，假设我们的插件是对初始化参数进行运算并只输出结果，我们可以稍微改一下：
+```javascript
+// plugin.js
+// plugin.js
+;(function(undefined) {
+    "use strict"
+    var _global;
+
+    function result(args,type){
+        var argsArr = Array.prototype.slice.call(args);
+        if(argsArr.length == 0) return 0;
+        switch(type) {
+            case 1: return argsArr.reduce(function(p,c){return p + c;});
+            case 2: return argsArr.reduce(function(p,c){return p - c;});
+            case 3: return argsArr.reduce(function(p,c){return p * c;});
+            case 4: return argsArr.reduce(function(p,c){return p / c;});
+            case 5: return argsArr.reduce(function(p,c){return p % c;});
+            default: return 0;
+        }
+    }
+
+    function Calculate(){}
+    Calculate.prototype.add = function(){console.log(result(arguments,1));return this;}
+    Calculate.prototype.sub = function(){console.log(result(arguments,2));return this;}
+    Calculate.prototype.mul = function(){console.log(result(arguments,3));return this;}
+    Calculate.prototype.div = function(){console.log(result(arguments,4));return this;}
+    Calculate.prototype.sur = function(){console.log(result(arguments,5));return this;}
+
+
+    // 最后将插件对象暴露给全局对象
+    _global = (function(){ return this || (0, eval)('this'); }());
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = Calculate;
+    } else if (typeof define === "function" && define.amd) {
+        define(function(){return Calculate;});
+    } else {
+        !('Calculate' in _global) && (_global.Calculate = Calculate);
+    }
+}());
+```
+这时调用我们写好的插件，则输出为如下：
+```javascript
+var plugin = new Calculate();
+plugin
+    .add(2,1)
+    .sub(2,1)
+    .mul(2,1)
+    .div(2,1)
+    .sur(2,1);
+// 结果：
+// 3
+// 1
+// 2
+// 2
+// 0
+```
+上面的例子，可以并没有太多的现实意义。不过在网页设计中，我们的插件基本上都是服务于UI层面，利用js脚本实现一些可交互的效果。这时我们编写一个UI插件，实现过程也是可以使用链式进行调用。
+
+#### 编写UI组件
+一般情况，如果一个js仅仅是处理一个逻辑，我们称之为插件，但如果与dom和css有关系并且具备一定的交互性，一般叫做组件。当然这没有什么明显的区分，只是一种习惯性叫法。
+利用原型链，可以将一些UI层面的业务代码封装在一个小组件中，并利用js实现组件的交互性。
+现有一个这样的需求:
+1. 实现一个弹层，此弹层可以显示一些文字提示性的信息；
+2. 弹层右上角必须有一个关闭按扭，点击之后弹层消失；
+3. 弹层底部必有一个“确定”按扭，然后根据需求，可以配置多一个“取消”按扭；
+4. 点击“确定”按扭之后，可以触发一个事件；
+5. 点击关闭/“取消”按扭后，可以触发一个事件。
+
+根据需求，我们先写出dom结构：
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+    <div class="mydialog">
+        <span class="close">&times;</span>
+        <div class="mydialog-cont">
+            <div class="cont">hello world!</div>
+        </div>
+        <div class="footer">
+            <span class="btn">确定</span>
+            <span class="btn">取消</span>
+        </div>
+    </div>
+    <script src="index.js"></script>
+</body>
+</html>
+```
+写出css结构：
+```css
+* { padding: 0; margin: 0; }
+.mydialog { background: #fff; box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.3); overflow: hidden; width: 300px; height: 180px; border: 1px solid #dcdcdc; position: absolute; top: 0; right: 0; bottom: 0; left: 0; margin: auto; }
+.close { position: absolute; right: 5px; top: 5px; width: 16px; height: 16px; line-height: 16px; text-align: center; font-size: 18px; cursor: pointer; }
+.mydialog-cont { padding: 0 0 50px; display: table; width: 100%; height: 100%; }
+.mydialog-cont .cont { display: table-cell; text-align: center; vertical-align: middle; width: 100%; height: 100%; }
+.footer { display: table; table-layout: fixed; width: 100%; position: absolute; bottom: 0; left: 0; border-top: 1px solid #dcdcdc; }
+.footer .btn { display: table-cell; width: 50%; height: 50px; line-height: 50px; text-align: center; cursor: pointer; }
+.footer .btn:last-child { display: table-cell; width: 50%; height: 50px; line-height: 50px; text-align: center; cursor: pointer; border-left: 1px solid #dcdcdc; }
+```
+接下来，我们开始编写我们的交互插件。
+我们假设组件的弹出层就是一个对象。则这个对象是包含了我们的交互、样式、结构及渲染的过程。于是我们定义了一个构造方法：
+```javascript
+function MyDialog(){} // MyDialog就是我们的组件对象了
+```
+对象**MyDialog**就相当于一个绳子，我们只要往这个绳子上不断地挂上钩子就是一个组件了。于是我们的组件就可以表示为：
+```javascript
+function MyDialog(){}
+MyDialog.prototype = {
+    constructor: this,
+    _initial: function(){},
+    _parseTpl: function(){},
+    _parseToDom: function(){},
+    show: function(){},
+    hide: function(){},
+    css: function(){}
+}
+```
+然后就可以将插件的功能都写上。不过中间的业务逻辑，需要自己去一步一步研究。无论如何写，我们最终要做到通过实例化一个MyDialog对象就可以使用我们的插件了。
+在编写的过程中，我们得先做一些工具函数：
+
+1.对象合并函数
+```javascript
+// 对象合并
+function extend(o,n,override) {
+    for(var key in n){
+        if(n.hasOwnProperty(key) && (!o.hasOwnProperty(key) || override)){
+            o[key]=n[key];
+        }
+    }
+    return o;
+}
+```
+2.自定义模板引擎解释函数
+```javascript
+// 自定义模板引擎
+function templateEngine(html, data) {
+    var re = /<%([^%>]+)?%>/g,
+        reExp = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,
+        code = 'var r=[];\n',
+        cursor = 0;
+    var match;
+    var add = function(line, js) {
+        js ? (code += line.match(reExp) ? line + '\n' : 'r.push(' + line + ');\n') :
+            (code += line != '' ? 'r.push("' + line.replace(/"/g, '\\"') + '");\n' : '');
+        return add;
+    }
+    while (match = re.exec(html)) {
+        add(html.slice(cursor, match.index))(match[1], true);
+        cursor = match.index + match[0].length;
+    }
+    add(html.substr(cursor, html.length - cursor));
+    code += 'return r.join("");';
+    return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
+}
+```
+3.查找class获取dom函数
+```javascript
+function getElementsByClass(className, parent) {
+    var classObj = new Array(),
+        classint = 0,
+        parentNode = !!parent ? parent : document;
+    var tags = parentNode.getElementsByTagName('*');
+    for(var i in tags) {
+        if(tags[i].nodeType == 1) {
+            if(!!tags[i].getAttribute('class') && tags[i].getAttribute('class').indexOf(className) > -1) {
+                classObj[classint] = tags[i];
+                classint++;
+            }
+        }
+    }
+    return classObj;
+}
+```
+则插件的构造函数可以写成这样子：
+```javascript
+// 插件构造函数 - 返回数组结构
+function MyDialog(opt){
+    this._initial(opt);
+}
+MyDialog.prototype = {
+    constructor: this,
+    _initial: function(opt) {
+        // 默认参数
+        var def = {
+            ok: true,
+            ok_txt: '确定',
+            cancel: false,
+            cancel_txt: '取消',
+            confirm: function(){},
+            close: function(){},
+            content: '',
+            tmpId: null
+        };
+        this.def = extend(def,opt,true);
+    },
+    _parseTpl: function(tmpId) { // 将模板转为字符串
+        var data = this.def;
+        var tpl = document.getElementById(tmpId).innerHTML.trim();
+        return templateEngine(tpl,data);
+    },
+    _parseToDom: function(str) { // 将字符串转为dom
+        var div = document.createElement('div');
+        if(typeof str == 'string') {
+            div.innerHTML = str;
+        }
+        return div.childNodes;
+    },
+    show: function(callback){
+        var tpl = this._parseTpl(this.def.tmpId), _this = this;
+        _dom && (_dom = null);
+        _dom = this._parseToDom(tpl)[0];
+        document.body.appendChild(_dom);
+        getElementsByClass('close',_dom)[0].onclick = function(){
+            _this.hide();
+        };
+        getElementsByClass('btn-ok',_dom)[0].onclick = function(){
+            _this.hide();
+        };
+        if(this.def.cancel){
+            getElementsByClass('btn-cancel',_dom)[0].onclick = function(){
+                _this.hide();
+            };
+        }
+        callback && callback();
+        return this;
+    },
+    hide: function(callback){
+        _dom && document.body.removeChild(_dom);
+        _dom = null;
+        callback && callback();
+        return this;
+    },
+    css: function(styleObj){
+        for(var prop in styleObj){
+            var attr = prop.replace(/[A-Z]/g,function(word){
+                return '-' + word.toLowerCase();
+            });
+            _dom.style[attr] = styleObj[prop];
+        }
+        return this;
+    }
+}
+```
+于是我们的最终代码为：
+```javascript
+;(function(undefined) {
+    "use strict"
+    var _global, _dom;
+
+    // 工具函数
+    // 对象合并
+    function extend(o,n,override) {
+        for(var key in n){
+            if(n.hasOwnProperty(key) && (!o.hasOwnProperty(key) || override)){
+                o[key]=n[key];
+            }
+        }
+        return o;
+    }
+    // 自定义模板引擎
+    function templateEngine(html, data) {
+        var re = /<%([^%>]+)?%>/g,
+            reExp = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,
+            code = 'var r=[];\n',
+            cursor = 0;
+        var match;
+        var add = function(line, js) {
+            js ? (code += line.match(reExp) ? line + '\n' : 'r.push(' + line + ');\n') :
+                (code += line != '' ? 'r.push("' + line.replace(/"/g, '\\"') + '");\n' : '');
+            return add;
+        }
+        while (match = re.exec(html)) {
+            add(html.slice(cursor, match.index))(match[1], true);
+            cursor = match.index + match[0].length;
+        }
+        add(html.substr(cursor, html.length - cursor));
+        code += 'return r.join("");';
+        return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
+    }
+    // 通过class查找dom
+    function getElementsByClass(className, parent) {
+        var classObj = new Array(),
+            classint = 0,
+            parentNode = !!parent ? parent : document;
+        var tags = parentNode.getElementsByTagName('*');
+        for(var i in tags) {
+            if(tags[i].nodeType == 1) {
+                if(!!tags[i].getAttribute('class') && tags[i].getAttribute('class').indexOf(className) > -1) {
+                    classObj[classint] = tags[i];
+                    classint++;
+                }
+            }
+        }
+        return classObj;
+    }
+
+    // 插件构造函数 - 返回数组结构
+    function MyDialog(opt){
+        this._initial(opt);
+    }
+    MyDialog.prototype = {
+        constructor: this,
+        _initial: function(opt) {
+            // 默认参数
+            var def = {
+                ok: true,
+                ok_txt: '确定',
+                cancel: false,
+                cancel_txt: '取消',
+                confirm: function(){},
+                close: function(){},
+                content: '',
+                tmpId: null
+            };
+            this.def = extend(def,opt,true);
+        },
+        _parseTpl: function(tmpId) { // 将模板转为字符串
+            var data = this.def;
+            var tpl = document.getElementById(tmpId).innerHTML.trim();
+            return templateEngine(tpl,data);
+        },
+        _parseToDom: function(str) { // 将字符串转为dom
+            var div = document.createElement('div');
+            if(typeof str == 'string') {
+                div.innerHTML = str;
+            }
+            return div.childNodes;
+        },
+        show: function(callback){
+            var tpl = this._parseTpl(this.def.tmpId), _this = this;
+            _dom && (_dom = null);
+            _dom = this._parseToDom(tpl)[0];
+            document.body.appendChild(_dom);
+            getElementsByClass('close',_dom)[0].onclick = function(){
+                _this.hide();
+            };
+            getElementsByClass('btn-ok',_dom)[0].onclick = function(){
+                _this.hide();
+            };
+            if(this.def.cancel){
+                getElementsByClass('btn-cancel',_dom)[0].onclick = function(){
+                    _this.hide();
+                };
+            }
+            callback && callback();
+            return this;
+        },
+        hide: function(callback){
+            _dom && document.body.removeChild(_dom);
+            _dom = null;
+            callback && callback();
+            return this;
+        },
+        css: function(styleObj){
+            for(var prop in styleObj){
+                var attr = prop.replace(/[A-Z]/g,function(word){
+                    return '-' + word.toLowerCase();
+                });
+                _dom.style[attr] = styleObj[prop];
+            }
+            return this;
+        },
+    }
+
+    // 最后将插件对象暴露给全局对象
+    _global = (function(){ return this || (0, eval)('this'); }());
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = MyDialog;
+    } else if (typeof define === "function" && define.amd) {
+        define(function(){return MyDialog;});
+    } else {
+        !('MyDialog' in _global) && (_global.MyDialog = MyDialog);
+    }
+}());
+```
+到这一步，我们的插件已经达到了基础需求了。我们可以在页面这样调用：
+```html
+<script type="text/template" id="dialogTpl">
+    <div class="mydialog">
+        <span class="close">&times;</span>
+        <div class="mydialog-cont">
+            <div class="cont"><% this.content %></div>
+        </div>
+        <div class="footer">
+            <% if(this.cancel){ %>
+            <span class="btn btn-ok"><% this.ok_txt %></span>
+            <span class="btn btn-cancel"><% this.cancel_txt %></span>
+            <% } else{ %>
+            <span class="btn btn-ok" style="width: 100%"><% this.ok_txt %></span>
+            <% } %>
+        </div>
+    </div>
+</script>
+<script src="index.js"></script>
+<script>
+    var mydialog = new MyDialog({
+        tmpId: 'dialogTpl',
+        cancel: true,
+        content: 'hello world!'
+    });
+    mydialog.show();
+</script>
+```
+
+### 插件的监听入口与响应
