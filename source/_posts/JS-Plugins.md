@@ -588,7 +588,8 @@ MyDialog.prototype = {
     _parseToDom: function(){},
     show: function(){},
     hide: function(){},
-    css: function(){}
+    css: function(){},
+    ...
 }
 ```
 然后就可以将插件的功能都写上。不过中间的业务逻辑，需要自己去一步一步研究。无论如何写，我们最终要做到通过实例化一个MyDialog对象就可以使用我们的插件了。
@@ -631,97 +632,27 @@ function templateEngine(html, data) {
 ```
 3.查找class获取dom函数
 ```javascript
-function getElementsByClass(className, parent) {
-    var classObj = new Array(),
-        classint = 0,
-        parentNode = !!parent ? parent : document;
-    var tags = parentNode.getElementsByTagName('*');
-    for(var i in tags) {
-        if(tags[i].nodeType == 1) {
-            if(!!tags[i].getAttribute('class') && tags[i].getAttribute('class').indexOf(className) > -1) {
-                classObj[classint] = tags[i];
-                classint++;
+// 通过class查找dom
+if(!('getElementsByClass' in HTMLElement)){
+    HTMLElement.prototype.getElementsByClass = function(n, tar){
+        var el = [],
+            _el = (!!tar ? tar : this).getElementsByTagName('*');
+        for (var i=0; i<_el.length; i++ ) {
+            if (!!_el[i].className && (typeof _el[i].className == 'string') && _el[i].className.indexOf(n) > -1 ) {
+                el[el.length] = _el[i];
             }
         }
-    }
-    return classObj;
+        return el;
+    };
+    ((typeof HTMLDocument !== 'undefined') ? HTMLDocument : Document).prototype.getElementsByClass = HTMLElement.prototype.getElementsByClass;
 }
 ```
-则插件的构造函数可以写成这样子：
+结合工具函数，于是我们的最终代码为：
 ```javascript
-// 插件构造函数 - 返回数组结构
-function MyDialog(opt){
-    this._initial(opt);
-}
-MyDialog.prototype = {
-    constructor: this,
-    _initial: function(opt) {
-        // 默认参数
-        var def = {
-            ok: true,
-            ok_txt: '确定',
-            cancel: false,
-            cancel_txt: '取消',
-            confirm: function(){},
-            close: function(){},
-            content: '',
-            tmpId: null
-        };
-        this.def = extend(def,opt,true);
-    },
-    _parseTpl: function(tmpId) { // 将模板转为字符串
-        var data = this.def;
-        var tpl = document.getElementById(tmpId).innerHTML.trim();
-        return templateEngine(tpl,data);
-    },
-    _parseToDom: function(str) { // 将字符串转为dom
-        var div = document.createElement('div');
-        if(typeof str == 'string') {
-            div.innerHTML = str;
-        }
-        return div.childNodes;
-    },
-    show: function(callback){
-        var tpl = this._parseTpl(this.def.tmpId), _this = this;
-        _dom && (_dom = null);
-        _dom = this._parseToDom(tpl)[0];
-        document.body.appendChild(_dom);
-        getElementsByClass('close',_dom)[0].onclick = function(){
-            _this.hide();
-        };
-        getElementsByClass('btn-ok',_dom)[0].onclick = function(){
-            _this.hide();
-        };
-        if(this.def.cancel){
-            getElementsByClass('btn-cancel',_dom)[0].onclick = function(){
-                _this.hide();
-            };
-        }
-        callback && callback();
-        return this;
-    },
-    hide: function(callback){
-        _dom && document.body.removeChild(_dom);
-        _dom = null;
-        callback && callback();
-        return this;
-    },
-    css: function(styleObj){
-        for(var prop in styleObj){
-            var attr = prop.replace(/[A-Z]/g,function(word){
-                return '-' + word.toLowerCase();
-            });
-            _dom.style[attr] = styleObj[prop];
-        }
-        return this;
-    }
-}
-```
-于是我们的最终代码为：
-```javascript
+// plugin.js
 ;(function(undefined) {
     "use strict"
-    var _global, _dom;
+    var _global;
 
     // 工具函数
     // 对象合并
@@ -754,20 +685,18 @@ MyDialog.prototype = {
         return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
     }
     // 通过class查找dom
-    function getElementsByClass(className, parent) {
-        var classObj = new Array(),
-            classint = 0,
-            parentNode = !!parent ? parent : document;
-        var tags = parentNode.getElementsByTagName('*');
-        for(var i in tags) {
-            if(tags[i].nodeType == 1) {
-                if(!!tags[i].getAttribute('class') && tags[i].getAttribute('class').indexOf(className) > -1) {
-                    classObj[classint] = tags[i];
-                    classint++;
+    if(!('getElementsByClass' in HTMLElement)){
+        HTMLElement.prototype.getElementsByClass = function(n, tar){
+            var el = [],
+                _el = (!!tar ? tar : this).getElementsByTagName('*');
+            for (var i=0; i<_el.length; i++ ) {
+                if (!!_el[i].className && (typeof _el[i].className == 'string') && _el[i].className.indexOf(n) > -1 ) {
+                    el[el.length] = _el[i];
                 }
             }
-        }
-        return classObj;
+            return el;
+        };
+        ((typeof HTMLDocument !== 'undefined') ? HTMLDocument : Document).prototype.getElementsByClass = HTMLElement.prototype.getElementsByClass;
     }
 
     // 插件构造函数 - 返回数组结构
@@ -789,11 +718,14 @@ MyDialog.prototype = {
                 tmpId: null
             };
             this.def = extend(def,opt,true);
+            this.tpl = this._parseTpl(this.def.tmpId);
+            this.dom = this._parseToDom(this.tpl)[0];
+            this.hasDom = false;
         },
         _parseTpl: function(tmpId) { // 将模板转为字符串
             var data = this.def;
-            var tpl = document.getElementById(tmpId).innerHTML.trim();
-            return templateEngine(tpl,data);
+            var tplStr = document.getElementById(tmpId).innerHTML.trim();
+            return templateEngine(tplStr,data);
         },
         _parseToDom: function(str) { // 将字符串转为dom
             var div = document.createElement('div');
@@ -803,18 +735,18 @@ MyDialog.prototype = {
             return div.childNodes;
         },
         show: function(callback){
-            var tpl = this._parseTpl(this.def.tmpId), _this = this;
-            _dom && (_dom = null);
-            _dom = this._parseToDom(tpl)[0];
-            document.body.appendChild(_dom);
-            getElementsByClass('close',_dom)[0].onclick = function(){
+            var _this = this;
+            if(this.hasDom) return ;
+            document.body.appendChild(this.dom);
+            this.hasDom = true;
+            document.getElementsByClass('close',this.dom)[0].onclick = function(){
                 _this.hide();
             };
-            getElementsByClass('btn-ok',_dom)[0].onclick = function(){
+            document.getElementsByClass('btn-ok',this.dom)[0].onclick = function(){
                 _this.hide();
             };
             if(this.def.cancel){
-                getElementsByClass('btn-cancel',_dom)[0].onclick = function(){
+                document.getElementsByClass('btn-cancel',this.dom)[0].onclick = function(){
                     _this.hide();
                 };
             }
@@ -822,9 +754,23 @@ MyDialog.prototype = {
             return this;
         },
         hide: function(callback){
-            _dom && document.body.removeChild(_dom);
-            _dom = null;
+            document.body.removeChild(this.dom);
+            this.hasDom = false;
             callback && callback();
+            return this;
+        },
+        modifyTpl: function(template){
+            if(!!template) {
+                if(typeof template == 'string'){
+                    this.tpl = template;
+                } else if(typeof template == 'function'){
+                    this.tpl = template();
+                } else {
+                    return this;
+                }
+            }
+            // this.tpl = this._parseTpl(this.def.tmpId);
+            this.dom = this._parseToDom(this.tpl)[0];
             return this;
         },
         css: function(styleObj){
@@ -832,10 +778,18 @@ MyDialog.prototype = {
                 var attr = prop.replace(/[A-Z]/g,function(word){
                     return '-' + word.toLowerCase();
                 });
-                _dom.style[attr] = styleObj[prop];
+                this.dom.style[attr] = styleObj[prop];
             }
             return this;
         },
+        width: function(val){
+            this.dom.style.width = val + 'px';
+            return this;
+        },
+        height: function(val){
+            this.dom.style.height = val + 'px';
+            return this;
+        }
     }
 
     // 最后将插件对象暴露给全局对象
