@@ -647,57 +647,14 @@ if(!('getElementsByClass' in HTMLElement)){
     ((typeof HTMLDocument !== 'undefined') ? HTMLDocument : Document).prototype.getElementsByClass = HTMLElement.prototype.getElementsByClass;
 }
 ```
-结合工具函数，于是我们的最终代码为：
+结合工具函数，再去实现每一个钩子函数具体逻辑结构：
 ```javascript
 // plugin.js
 ;(function(undefined) {
     "use strict"
     var _global;
 
-    // 工具函数
-    // 对象合并
-    function extend(o,n,override) {
-        for(var key in n){
-            if(n.hasOwnProperty(key) && (!o.hasOwnProperty(key) || override)){
-                o[key]=n[key];
-            }
-        }
-        return o;
-    }
-    // 自定义模板引擎
-    function templateEngine(html, data) {
-        var re = /<%([^%>]+)?%>/g,
-            reExp = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,
-            code = 'var r=[];\n',
-            cursor = 0;
-        var match;
-        var add = function(line, js) {
-            js ? (code += line.match(reExp) ? line + '\n' : 'r.push(' + line + ');\n') :
-                (code += line != '' ? 'r.push("' + line.replace(/"/g, '\\"') + '");\n' : '');
-            return add;
-        }
-        while (match = re.exec(html)) {
-            add(html.slice(cursor, match.index))(match[1], true);
-            cursor = match.index + match[0].length;
-        }
-        add(html.substr(cursor, html.length - cursor));
-        code += 'return r.join("");';
-        return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
-    }
-    // 通过class查找dom
-    if(!('getElementsByClass' in HTMLElement)){
-        HTMLElement.prototype.getElementsByClass = function(n, tar){
-            var el = [],
-                _el = (!!tar ? tar : this).getElementsByTagName('*');
-            for (var i=0; i<_el.length; i++ ) {
-                if (!!_el[i].className && (typeof _el[i].className == 'string') && _el[i].className.indexOf(n) > -1 ) {
-                    el[el.length] = _el[i];
-                }
-            }
-            return el;
-        };
-        ((typeof HTMLDocument !== 'undefined') ? HTMLDocument : Document).prototype.getElementsByClass = HTMLElement.prototype.getElementsByClass;
-    }
+    ...
 
     // 插件构造函数 - 返回数组结构
     function MyDialog(opt){
@@ -792,7 +749,6 @@ if(!('getElementsByClass' in HTMLElement)){
         }
     }
 
-    // 最后将插件对象暴露给全局对象
     _global = (function(){ return this || (0, eval)('this'); }());
     if (typeof module !== "undefined" && module.exports) {
         module.exports = MyDialog;
@@ -832,4 +788,275 @@ if(!('getElementsByClass' in HTMLElement)){
 </script>
 ```
 
-### 插件的监听入口与响应
+### 插件的监听
+弹出框插件我们已经实现了基本的显示与隐藏的功能。不过我们在怎么时候弹出，弹出之后可能进行一些操作，实际上还是需要进行一些可控的操作。就好像我们进行事件绑定一样，只有用户点击了按扭，才响应具体的事件。那么，我们的插件，应该也要像事件绑定一样，只有执行了某些操作的时候，调用相应的事件响应。
+这种js的设计模式，被称为 **订阅/发布模式**，也被叫做 **观察者模式**。我们插件中的也需要用到观察者模式，比如，在打开弹窗之前，我们需要先进行弹窗的内容更新，执行一些判断逻辑等，然后执行完成之后才显示出弹窗。在关闭弹窗之后，我们需要执行关闭之后的一些逻辑，处理业务等。这时候我们需要像平时绑定事件一样，给插件做一些“事件”绑定回调方法。
+我们jquery对dom的事件响应是这样的：
+```javascript
+$(<dom>).on("click",function(){})
+```
+我们照着上面的方式设计了对应的插件响应是这样的：
+```javascript
+mydialog.on('show',function(){})
+```
+则，我们需要实现一个事件机制，以达到监听插件的事件效果。关于自定义事件监听，可以参考一篇博文：[漫谈js自定义事件、DOM/伪DOM自定义事件](http://www.zhangxinxu.com/wordpress/2012/04/js-dom%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BA%8B%E4%BB%B6/)。在此不进行大篇幅讲自定义事件的问题。
+最终我们实现的插件代码为：
+```javascript
+// plugin.js
+;(function(undefined) {
+    "use strict"
+    var _global;
+
+    // 工具函数
+    // 对象合并
+    function extend(o,n,override) {
+        for(var key in n){
+            if(n.hasOwnProperty(key) && (!o.hasOwnProperty(key) || override)){
+                o[key]=n[key];
+            }
+        }
+        return o;
+    }
+    // 自定义模板引擎
+    function templateEngine(html, data) {
+        var re = /<%([^%>]+)?%>/g,
+            reExp = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,
+            code = 'var r=[];\n',
+            cursor = 0;
+        var match;
+        var add = function(line, js) {
+            js ? (code += line.match(reExp) ? line + '\n' : 'r.push(' + line + ');\n') :
+                (code += line != '' ? 'r.push("' + line.replace(/"/g, '\\"') + '");\n' : '');
+            return add;
+        }
+        while (match = re.exec(html)) {
+            add(html.slice(cursor, match.index))(match[1], true);
+            cursor = match.index + match[0].length;
+        }
+        add(html.substr(cursor, html.length - cursor));
+        code += 'return r.join("");';
+        return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
+    }
+    // 通过class查找dom
+    if(!('getElementsByClass' in HTMLElement)){
+        HTMLElement.prototype.getElementsByClass = function(n){
+            var el = [],
+                _el = this.getElementsByTagName('*');
+            for (var i=0; i<_el.length; i++ ) {
+                if (!!_el[i].className && (typeof _el[i].className == 'string') && _el[i].className.indexOf(n) > -1 ) {
+                    el[el.length] = _el[i];
+                }
+            }
+            return el;
+        };
+        ((typeof HTMLDocument !== 'undefined') ? HTMLDocument : Document).prototype.getElementsByClass = HTMLElement.prototype.getElementsByClass;
+    }
+
+    // 插件构造函数 - 返回数组结构
+    function MyDialog(opt){
+        this._initial(opt);
+    }
+    MyDialog.prototype = {
+        constructor: this,
+        _initial: function(opt) {
+            // 默认参数
+            var def = {
+                ok: true,
+                ok_txt: '确定',
+                cancel: false,
+                cancel_txt: '取消',
+                confirm: function(){},
+                close: function(){},
+                content: '',
+                tmpId: null
+            };
+            this.def = extend(def,opt,true); //配置参数
+            this.tpl = this._parseTpl(this.def.tmpId); //模板字符串
+            this.dom = this._parseToDom(this.tpl)[0]; //存放在实例中的节点
+            this.hasDom = false; //检查dom树中dialog的节点是否存在
+            this.listeners = []; //自定义事件，用于监听插件的用户交互
+            this.handlers = {};
+        },
+        _parseTpl: function(tmpId) { // 将模板转为字符串
+            var data = this.def;
+            var tplStr = document.getElementById(tmpId).innerHTML.trim();
+            return templateEngine(tplStr,data);
+        },
+        _parseToDom: function(str) { // 将字符串转为dom
+            var div = document.createElement('div');
+            if(typeof str == 'string') {
+                div.innerHTML = str;
+            }
+            return div.childNodes;
+        },
+        show: function(callback){
+            var _this = this;
+            if(this.hasDom) return ;
+            if(this.listeners.indexOf('show') > -1) {
+                if(!this.emit({type:'show',target: this.dom})) return ;
+            }
+            document.body.appendChild(this.dom);
+            this.hasDom = true;
+            this.dom.getElementsByClass('close')[0].onclick = function(){
+                _this.hide();
+                if(_this.listeners.indexOf('close') > -1) {
+                    _this.emit({type:'close',target: _this.dom})
+                }
+                !!_this.def.close && _this.def.close.call(this,_this.dom);
+            };
+            this.dom.getElementsByClass('btn-ok')[0].onclick = function(){
+                _this.hide();
+                if(_this.listeners.indexOf('confirm') > -1) {
+                    _this.emit({type:'confirm',target: _this.dom})
+                }
+                !!_this.def.confirm && _this.def.confirm.call(this,_this.dom);
+            };
+            if(this.def.cancel){
+                this.dom.getElementsByClass('btn-cancel')[0].onclick = function(){
+                    _this.hide();
+                    if(_this.listeners.indexOf('cancel') > -1) {
+                        _this.emit({type:'cancel',target: _this.dom})
+                    }
+                };
+            }
+            callback && callback();
+            if(this.listeners.indexOf('shown') > -1) {
+                this.emit({type:'shown',target: this.dom})
+            }
+            return this;
+        },
+        hide: function(callback){
+            if(this.listeners.indexOf('hide') > -1) {
+                if(!this.emit({type:'hide',target: this.dom})) return ;
+            }
+            document.body.removeChild(this.dom);
+            this.hasDom = false;
+            callback && callback();
+            if(this.listeners.indexOf('hidden') > -1) {
+                this.emit({type:'hidden',target: this.dom})
+            }
+            return this;
+        },
+        modifyTpl: function(template){
+            if(!!template) {
+                if(typeof template == 'string'){
+                    this.tpl = template;
+                } else if(typeof template == 'function'){
+                    this.tpl = template();
+                } else {
+                    return this;
+                }
+            }
+            this.dom = this._parseToDom(this.tpl)[0];
+            return this;
+        },
+        css: function(styleObj){
+            for(var prop in styleObj){
+                var attr = prop.replace(/[A-Z]/g,function(word){
+                    return '-' + word.toLowerCase();
+                });
+                this.dom.style[attr] = styleObj[prop];
+            }
+            return this;
+        },
+        width: function(val){
+            this.dom.style.width = val + 'px';
+            return this;
+        },
+        height: function(val){
+            this.dom.style.height = val + 'px';
+            return this;
+        },
+        on: function(type, handler){
+            // type: show, shown, hide, hidden, close, confirm
+            if(typeof this.handlers[type] === 'undefined') {
+                this.handlers[type] = [];
+            }
+            this.listeners.push(type);
+            this.handlers[type].push(handler);
+            return this;
+        },
+        off: function(type, handler){
+            if(this.handlers[type] instanceof Array) {
+                var handlers = this.handlers[type];
+                for(var i = 0, len = handlers.length; i < len; i++) {
+                    if(handlers[i] === handler) {
+                        break;
+                    }
+                }
+                this.listeners.splice(i, 1);
+                handlers.splice(i, 1);
+                return this;
+            }
+        },
+        emit: function(event){
+            if(!event.target) {
+                event.target = this;
+            }
+            if(this.handlers[event.type] instanceof Array) {
+                var handlers = this.handlers[event.type];
+                for(var i = 0, len = handlers.length; i < len; i++) {
+                    handlers[i](event);
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    // 最后将插件对象暴露给全局对象
+    _global = (function(){ return this || (0, eval)('this'); }());
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = MyDialog;
+    } else if (typeof define === "function" && define.amd) {
+        define(function(){return MyDialog;});
+    } else {
+        !('MyDialog' in _global) && (_global.MyDialog = MyDialog);
+    }
+}());
+```
+然后调用的时候就可以直接使用插件的事件绑定了。
+```javascript
+var mydialog = new MyDialog({
+    tmpId: 'dialogTpl',
+    cancel: true,
+    content: 'hello world!'
+});
+mydialog.on('confirm',function(ev){
+    console.log('you click confirm!');
+    // 写你的确定之后的逻辑代码...
+});
+document.getElementById('test').onclick = function(){
+    mydialog.show();
+}
+```
+给出此例子的[demo](https://huangguangjie.github.io/myDialog/)，有需要具体实现的同学可以去查阅。
+
+### 插件发布
+我们写好了插件，实际上还可以将我们的插件发布到开源组织去分享给更多人去使用（代码必须是私人拥有所有支配权限）。我们将插件打包之后，就可以发布到开源组织上去供别人下载使用了。
+我们熟知的npm社区就是一个非常良好的发布插件的平台。具体可以如下操作：
+写初始化包的描述文件：
+```bash
+$ npm init
+```
+注册包仓库帐号
+```bash
+$ npm adduser
+Username: <帐号>
+Password: <密码>
+Email:(this IS public) <邮箱>
+Logged in as <帐号> on https://registry.npmjs.org/.
+```
+上传包
+```bash
+$ npm publish
+```
+安装包
+```bash
+$ npm install mydialog
+```
+到此，我们的插件就可以直接被更多人去使用了。
+
+### 结论
+写了这么多，比较啰嗦，我在此做一下总结：
+关于如何编写出一个好的js原生插件，需要平时在使用别人的插件的同时，多查看一下api文档，了解插件的调用方式，然后再看一下插件的源码的设计方式。基本上我们可以确定大部分插件都是按照原型的方式进行设计的。而我从上面的例子中，就使用了好多js原生的知识点，函数的命名冲突、闭包、作用域，自定义工具函数扩展对象的钩子函数，以及对象的初始化、原型链继承，构造函数的定义及设计模式，还有事件的自定义，js设计模式的观察者模式等知识。这些内容还是需要初学者多多了解才能进行一些高层次一些的插件开发。
