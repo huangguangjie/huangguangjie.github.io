@@ -10,7 +10,7 @@
     
     <title>
         
-            tags | 
+            标签: immutable | 
         
         打不死的小强
     </title>
@@ -48,7 +48,7 @@
     <!-- The Open Graph protocol -->
     <meta property="og:url" content="https://huangguangjie.github.io">
     <meta property="og:type" content="blog">
-    <meta property="og:title" content="tags | 打不死的小强">
+    <meta property="og:title" content="标签: immutable | 打不死的小强">
     <meta property="og:description" content="博客 文章 随笔">
     
 
@@ -218,63 +218,95 @@
                         </button>
                     
 
-                    <!-- Post TOC -->
+                    <!-- Index Module -->
+<div class="material-index mdl-grid">
+    
+    <div class="locate-thumbnail-symbol"></div>
 
+    <!-- Pin on top -->
+    
+        
+    
 
-<!-- Layouts -->
+    <!-- Normal Post -->
+    
+        
+        
+            <!-- Paradox Thumbnail -->
+            <div class="post_entry-module mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col fade out">
+    <!-- Post Thumbnail -->
+    
+        
+            <!-- Random Thumbnail -->
+            <div class="post_thumbnail-random mdl-card__media mdl-color-text--grey-50">
+        
+    
 
-    <!-- Tags Cloud -->
-    <style>
-    #bottom{
-        position: relative;
-    }
+        <!-- Post Title -->
+        <p class="article-headline-p"><a href="/2017/04/15/react-family/">React全家桶之初体验</a></p>
+    </div>
 
-    @media screen and (max-width: 480px) {
-        .material-tagscloud{
-            margin: 6em 2em 0;
-        }
-    }
+    <!-- Post Excerpt -->
+    <div class="mdl-color-text--grey-600 mdl-card__supporting-text post_entry-content">
+        
+            接触React也有段时间了，但是从初学者的角度来看，官网的资料实在是少，看起来比较吃力，并且是英文的，而那中文的网站却也是翻译的乱七八糟的，无力吐槽。我作为一个初学者，我谈不上有什么高深见解，偶尔有一些心得与体会，将之分享给与我一样的刚入门的同学，如果您已经比较熟悉这些知识了，请忽视此篇...
+        
+        &nbsp;&nbsp;&nbsp;
+        <span>
+            <a href="/2017/04/15/react-family/" target="_self">继续阅读</a>
+        </span>
+    </div>
+    <!-- Post_entry Info-->
+    <div id="post_entry-info">
+        <div id="post_entry-left-info" class="mdl-card__supporting-text meta mdl-color-text--grey-600 ">
+            <!-- Author Avatar -->
+            <div id="author-avatar">
+                <img src="https://avatars3.githubusercontent.com/u/8894655?v=3&amp;s=460" width="44px" height="44px" alt="黄广杰's avatar">
+            </div>
+            <div>
+                <strong>黄广杰</strong>
+                <span>4月 15, 2017</span>
+            </div>
+        </div>
+        <div id="post_entry-right-info">
+            <!-- Category -->
+            <span class="post_entry-category">
+                <a class="post_category-link" href="/categories/技术/">技术</a>, <a class="post_category-link" href="/categories/技术/总结/">总结</a>
+            </span>
 
-    .material-tagscloud a{
-        text-decoration:none;
-        padding: 1px 9px;
-        margin: 9px 1px;
-        line-height: 40px;
-        white-space: nowrap;
-        transition: .6s;
-        opacity: .85;
-    }
+            
 
-    .material-tagscloud a:hover{
-        transition: .6s;
-        opacity: 1;
-        background: #FAFAFA;
-        box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
-    }
-</style>
-
-<div class=" material-tagscloud">
-    <div class="material-post mdl-grid">
-        <a href="/tags/es6/" style="font-size: 35px; color: #212121">es6</a> <a href="/tags/immutable/" style="font-size: 16px; color: #757575">immutable</a> <a href="/tags/javascript/" style="font-size: 16px; color: #757575">javascript</a> <a href="/tags/node/" style="font-size: 16px; color: #757575">node</a> <a href="/tags/npm/" style="font-size: 16px; color: #757575">npm</a> <a href="/tags/promise/" style="font-size: 16px; color: #757575">promise</a> <a href="/tags/react/" style="font-size: 35px; color: #212121">react</a> <a href="/tags/redux/" style="font-size: 35px; color: #212121">redux</a> <a href="/tags/yarn/" style="font-size: 16px; color: #757575">yarn</a> <a href="/tags/原生对象/" style="font-size: 16px; color: #757575">原生对象</a> <a href="/tags/插件/" style="font-size: 16px; color: #757575">插件</a> <a href="/tags/自定义/" style="font-size: 16px; color: #757575">自定义</a>
+            <!-- Post Views -->
+            <span class="post_entry-views">
+            </span>
+        </div>
     </div>
 </div>
 
+        
+        
+        
+    
 
-<script>
-    var adjustFooter = function() {
-        if( ($('#bottom').offset().top + $('#bottom').outerHeight() ) < $(window).height() ) {
-            var footerBottom = $(window).height() - $('#bottom').outerHeight() - $('#bottom').offset().top;
-            $('#bottom').css('bottom', '-' + footerBottom + 'px');
-        }
-    };
+    
 
-    $(document).ready(function() {
-        adjustFooter();
-    });
+    
+        <script>
+    var randomNum;
+
+    var locatePost = $('.locate-thumbnail-symbol').next();
+    for(var i = 0; i < 10; i++) {
+        randomNum = Math.floor(Math.random() * 19 + 1);
+
+        locatePost.children('.post_thumbnail-random').attr('id', 'random_thumbnail-'+randomNum);
+        locatePost.children('.post_thumbnail-random').css('background-image', 'url(' + '/img/random/material-' + randomNum + '.png' + ')')
+
+        locatePost = locatePost.next();
+    }
 </script>
 
-
-
+    
+</div>
 
 
                     
