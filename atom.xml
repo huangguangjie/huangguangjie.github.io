@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://huangguangjie.github.io/"/>
-  <updated>2017-04-17T15:08:49.744Z</updated>
+  <updated>2017-04-17T15:14:49.454Z</updated>
   <id>https://huangguangjie.github.io/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="https://huangguangjie.github.io/2017/04/15/react-family/"/>
     <id>https://huangguangjie.github.io/2017/04/15/react-family/</id>
     <published>2017-04-14T16:00:00.000Z</published>
-    <updated>2017-04-17T15:08:49.744Z</updated>
+    <updated>2017-04-17T15:14:49.454Z</updated>
     
     <content type="html"><![CDATA[<p>接触React也有段时间了，但是从初学者的角度来看，官网的资料实在是少，看起来比较吃力，并且是英文的，而那中文的网站却也是翻译的乱七八糟的，无力吐槽。我作为一个初学者，我谈不上有什么高深见解，偶尔有一些心得与体会，将之分享给与我一样的刚入门的同学，如果您已经比较熟悉这些知识了，请忽视此篇。另外我想说明的是，此文不是教程或者文档，关于理解也不够深刻，有偏差或者误解的地方欢迎指正。下面是从我的角度去解释如何实现一些简单的例子。如果有些概念不理解可以看<a href="https://github.com/tsrot/study-notes/blob/master/React%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%BA%90%E6%B1%87%E6%80%BB.md" target="_blank" rel="external">React学习资源汇总</a>，这里有详细的文档教大家如何去学习React。<br>因为facebook已经完全掏拥抱ES6标准，所以我们也遵循官网的标准进行编写我们的代码。我是以案例去说明这个react全家桶（我在此案例代码编辑的过程中，不在乎文件夹的划分，全部代码写在一个文件里面，实际开发中请注意区分）。</p>
 <h3 id="React全家桶成员及初步项目搭建"><a href="#React全家桶成员及初步项目搭建" class="headerlink" title="React全家桶成员及初步项目搭建"></a>React全家桶成员及初步项目搭建</h3><h4 id="关于全家桶的理解"><a href="#关于全家桶的理解" class="headerlink" title="关于全家桶的理解"></a>关于全家桶的理解</h4><p>大家都知道react.js仅仅是一个UI库，说白了，它只关心views的渲染，其它的都不管。为了做出大型web应用，他还需要其它插件帮忙才行。<br>React全家桶里有非常多的技术及内容要学。在此讲不完所有的成员，因为根据项目需要，会有增减。所以，我只从核心组成方面讲几个，以达到学习react的组合开发的效果。<br>我列举来讲的全家桶是：<strong>ES6 + react + redux + immutable.js + webpack + yarn</strong></p>
@@ -760,7 +760,7 @@ Search<span class="token punctuation">.</span>propTypes <span class="token opera
     <link href="https://huangguangjie.github.io/2017/04/05/JS-Plugins/"/>
     <id>https://huangguangjie.github.io/2017/04/05/JS-Plugins/</id>
     <published>2017-04-04T16:00:00.000Z</published>
-    <updated>2017-04-13T14:30:38.258Z</updated>
+    <updated>2017-04-17T15:14:49.454Z</updated>
     
     <content type="html"><![CDATA[<p>作为一个前端er，如果不会写一个小插件，都不好意思说自己是混前端界的。写还不能依赖jquery之类的工具库，否则装得不够高端。那么，如何才能装起来让自己看起来逼格更高呢？当然是利用js纯原生的写法啦。以前一直说，掌握了js原生，就基本上可以解决前端的所有脚本交互工作了，这话大体上是有些浮夸了。不过，也从侧面说明了原生js在前端中占着多么重要的一面。好了。废话不多说。咱们就来看一下怎么去做一个自己的js插件吧。</p>
 <h3 id="插件的需求"><a href="#插件的需求" class="headerlink" title="插件的需求"></a>插件的需求</h3><p>我们写代码，并不是所有的业务或者逻辑代码都要抽出来复用。首先，我们得看一下是否需要将一部分经常重复的代码抽象出来，写到一个单独的文件中为以后再次使用。再看一下我们的业务逻辑是否可以为团队服务。<br>插件不是随手就写成的，而是根据自己业务逻辑进行抽象。没有放之四海而皆准的插件，只有对插件，之所以叫做插件，那么就是开箱即用，或者我们只要添加一些配置参数就可以达到我们需要的结果。如果都符合了这些情况，我们才去考虑做一个插件。</p>
@@ -1740,7 +1740,7 @@ Logged <span class="token keyword">in</span> as <span class="token operator">&lt
     <link href="https://huangguangjie.github.io/2017/04/02/promise/"/>
     <id>https://huangguangjie.github.io/2017/04/02/promise/</id>
     <published>2017-04-01T16:00:00.000Z</published>
-    <updated>2017-04-13T14:30:38.258Z</updated>
+    <updated>2017-04-17T15:14:49.454Z</updated>
     
     <content type="html"><![CDATA[<p>在es6使用已经很普遍的今天，我再说Promise各种API及其原理的话也不过是锦上添花。Promise的重要性，我们不必多讲，相信大家都知道出现Promise的意义及其对js异步编程上的作用是多么巨大。不过，说真，要真正去理解使用这个对象，确实是有些困难，特别是对我这种理解新东西总是有困难症的人来说更甚。所以，我的办法就是重重复复地看相关的文章及api文档，以达到自己能使用及理解。在理解Promise之前，先来看一下异步的实现过程。</p>
 <h3 id="为什么要用Promise"><a href="#为什么要用Promise" class="headerlink" title="为什么要用Promise"></a>为什么要用Promise</h3><p>在说Promise之前，我们得先来确定一下为什么要有这个对象。</p>
@@ -2013,7 +2013,7 @@ Promise<span class="token punctuation">.</span><span class="token function">race
     <link href="https://huangguangjie.github.io/2017/03/30/redux-applyMiddleware/"/>
     <id>https://huangguangjie.github.io/2017/03/30/redux-applyMiddleware/</id>
     <published>2017-03-29T16:00:00.000Z</published>
-    <updated>2017-04-13T14:30:38.305Z</updated>
+    <updated>2017-04-17T15:14:49.454Z</updated>
     
     <content type="html"><![CDATA[<p>在学习了redux过程中，了解到中间件这个名词，但是我看了十遍，也完全就是懵逼的状态。于是又重复敲了几次代码也不能掌握这个东西到底是什么？看官网文档，那么些专业名词，让人半天摸不着头脑。我们从流程图中知道，react组件在执行过程中，特别是在中间插入各种奇怪的需求的时候，不可能每每都是改动一下代码逻辑，而是用一种方便插拔的方式添加进去。但是这个过程说得简单，理解也容易，问题到底是怎么实现的呢？本人这样的半吊子水平，要理解这么高深的东西，真是太困难了。反复地摸索过程中，感觉摸到一些门径，于是斗胆做一下我的解读，如有不对，欢迎斧正！</p>
 <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在学习appleyMiddleware中间件之前，必须要有一些知识储备。列出一下：</p>
@@ -2234,7 +2234,7 @@ dispatch <span class="token operator">=</span> <span class="token function">comp
     <link href="https://huangguangjie.github.io/2017/03/29/yarn-article/"/>
     <id>https://huangguangjie.github.io/2017/03/29/yarn-article/</id>
     <published>2017-03-28T16:00:00.000Z</published>
-    <updated>2017-04-13T14:30:38.321Z</updated>
+    <updated>2017-04-17T15:14:49.454Z</updated>
     
     <content type="html"><![CDATA[<p>Yarn 是一个新的包管理器，用于替代现有的 npm 客户端或者其他兼容 npm 仓库的包管理工具。Yarn 保留了现有工作流的特性，优点是更快、更安全、更可靠。</p>
 <h3 id="为什么用yarn"><a href="#为什么用yarn" class="headerlink" title="为什么用yarn"></a>为什么用yarn</h3><h4 id="非常快，非常非常快"><a href="#非常快，非常非常快" class="headerlink" title="非常快，非常非常快"></a>非常快，非常非常快</h4><p>yarn 缓存了每次你下载的模块，所以同样模块同样的版本不会发送第二次下载请求，对于没有缓存的模块， yarn 也可以通过并行的网络请求最大限度利用网络资源。现在真的是没有什么几十秒安装不完的依赖的。一个 50 个依赖的 webpack + babel 项目可以在 20 秒左右安装完成。</p>
