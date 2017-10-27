@@ -14,7 +14,7 @@ foldmethod: syntax
 
 ## 操作符的妙用
 
-### 利用（按位与）&判断奇偶数
+### 利用按位与“&”判断奇偶数
 按位与运算的逻辑是这样： 0001 & 0011 = 0001，也就是两个位都是1，才是1，其它位都是0。
 我们经常要做一个条件，判断一个数的奇偶性，会这样写：
 ```javascript
@@ -37,7 +37,7 @@ function fn(n) {
 }
 ```
 
-### 利用（按位或）|取整
+### 利用按位或“|”取整
 按位或运算的逻辑是这样： 0001 | 0011 = 0011，也就是两个位都是0，才是0，其它位都1。
 ```javascript
 0 | 0 //0
@@ -64,7 +64,7 @@ export default {
 }
 ```
 
-### 利用(按位非)~简化表达式
+### 利用按位非“~”简化表达式
 普及一下`~`运算符，这个符号学名叫“按位非”，它是一个一元运算符。按位非操作符由一个波浪线（~）表示，按位非就是求二进制的反码。不管什么值使用了这个运算符，结果总是一个*数字*。按位非运算符，简单的理解就是改变运算数的符号并减去1。
 ```javascript
 ~5 //-6
@@ -477,10 +477,63 @@ function callback(obj) {
 document.body.addEventListener('click',callback('hello')); //执行callback('hello')，则返回的是一个函数
 ```
 
-### 利用正则表达式
+### 利用正则表达式处理实际问题
 1、获取有价值部分
 经常，在项目中，可能会获取到一些带有带有各种干扰因素的值。而我们需要提取相应的数字部分，可以使用正则表达式获取。
 ```javascript
 var val = "98.8元/斤";
 val.replace(/[^(0-9).]/ig,'') //98.8
 ```
+2、获取URL中的value值
+经常，我们会从url中获取到`location.search`，但却是一个字符串，然后还需要将这个字符串进行分拆才能得到想要的值，而使用正则，则快速方便得多。
+```javascript
+//假设当前url为：https://www.baidu.com?name=jawil&age=23
+
+//普通实现：
+function fn(key) {
+    var obj = {}
+    var searchStr = window.location.search.substring(1);
+    searchStr.split('&').forEach(function(item) {
+        var arr = item.split('=');
+        obj[arr[0]] = arr[1];
+    });
+    return obj[key]
+}
+
+console.log(fn('name')) //jawil
+console.log(fn('age')) //23
+
+//使用正则实现：
+function fn(key) {
+    var reg = new RegExp("(^|&)"+ key +"=([^&]*)(&|$)"); //url正则表达式
+    var flag = window.location.search.substring(1).match(reg);
+    return flag != null ? unescape(flag[2]) : null;
+}
+
+console.log(fn('name')) //jawil
+```
+3、格式化数字
+通常，我们需要将一个大的数字 19456212 转化为 19,456,212 这种样子。使用正则表达式可以很好的处理：
+```javascript
+var num = 19456212.85;
+num.toLocaleString() //19,456,212.85 toLocaleString()会根据你机器的本地环境来返回字符串，它和toString()返回的值在不同的本地环境下使用的符号会有微妙的变化
+
+//为了保险起见，可以使用方法实现
+function fn(s, n) {
+    n = n > 0 && n <= 20 ? n : 2;
+    s = parseFloat((s + '').replace(/[^\d\.-]/g, '')).toFixed(n) + '';
+    var l = s.split('.')[0].split('').reverse(),
+        r = s.split('.')[1];
+    t = '';
+    for (i = 0; i < l.length; i++) {
+        t += l[i] + ((i + 1) % 3 == 0 && (i + 1) != l.length ? ',' : '');
+    }
+    return t.split('').reverse().join('') + '.' + r;
+}
+
+console.log(fn(19456212.85)) //19,456,212.85
+```
+
+
+### 总结
+javascript日常的使用过程中，很多语句，其实都是可以有多种写法，尝试着使用不同的写法，对比一下哪种写法更简洁，更易读，更能提高执行效率，可以实现对代码的优化。而我在项目开发过程中使用到的一些简写，很大部分是了解别人的代码写法，从中学以致用。另外一个很好的办法就是，查调试自己的压缩代码的时候，不防读一下被压缩优化过的代码，变成了啥样子的，会有发现，压缩过的代码，实际上编译器已经帮我们实现了最佳写法，这样，不妨借鉴一下，用到自己的项目中去。
