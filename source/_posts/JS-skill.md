@@ -222,6 +222,7 @@ Math.floor(12.55) //12
 ~~null //0
 ~~!null //1
 ```
+> Tips: 虽然~~用起来比较骚气，但是为了可读性，本人还是建议使用Math.floor()更为稳妥，谁知道领导review代码的时候，会不会说你过于装逼，要被喷死。
 
 ### 利用+将字符串转为数字
 如果要将一个表现字符串的数字转化为真正的数字，正常逻辑是：`Number()`或者`parseInt()、parseFloat()`实现转化。实际上，我们还可以更简捷，只需要在前面添加一个`+`就可以了。当然，你也可以用`-`来实现，只不过，这样子，则值就成了负数。
@@ -402,6 +403,9 @@ console.log(arr) //[1,2,3]
 //直接设置长度值
 arr.length = 3
 console.log(arr) //[1,2,3]
+
+//还可以实现数组的清空操作
+arr.length = 0; //arr => []
 ```
 
 ### 数组合并
@@ -450,3 +454,26 @@ function fn(n) {
 }
 ```
 > Tips: 这个方法虽然好用，但是有一点值得注意，ECMAScript4中为了限制js的灵活度，让js变得严格，新增了严格模式，在严格模式中我们被禁止不使用var来直接声明一个全局变量，当然这不是重点，重点是arguments.callee这个属性也被禁止了。
+
+### 给回调函数传递参数
+经常，函数一般是可以当作参数来使用。但是有时候，一些函数自身需要带参，这时候，把函数当参数使用的话，就显得比较麻烦。一般的处理方法是，通过附加的传参的办法。
+```javascript
+function callback(obj) {
+    console.log(obj)
+}
+
+function fn(callback, obj) {
+    callback(obj)
+}
+```
+但是有些时候，函数的参数限定了，只能传一个回调函数，这时，这种附加传参的显得无力了。采用闭包的方式可以解决此问题。
+```javascript
+function callback(obj) {
+    return function() {
+        console.log(obj)
+    }
+}
+
+document.body.addEventListener('click',callback('hello')); //执行callback('hello')，则返回的是一个函数
+```
+
