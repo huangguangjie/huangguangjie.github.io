@@ -477,3 +477,10 @@ function callback(obj) {
 document.body.addEventListener('click',callback('hello')); //执行callback('hello')，则返回的是一个函数
 ```
 
+### 利用正则表达式
+1、获取有价值部分
+经常，在项目中，可能会获取到一些带有带有各种干扰因素的值。而我们需要提取相应的数字部分，可以使用正则表达式获取。
+```javascript
+var val = "98.8元/斤";
+val.replace(/[^(0-9).]/ig,'') //98.8
+```
